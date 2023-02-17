@@ -7,9 +7,9 @@
 	"Author": "Cider Collective",
 	"URL": "https://cider.sh/deck",
 	"PrivateAPI": true,
-	"Version": "1.0",
+	"Version": "1.0.1",
 	"Software": {
-		"MinimumVersion": "5.0"
+		"MinimumVersion": "1.0"
 	},
 	"OS": [
 		{
