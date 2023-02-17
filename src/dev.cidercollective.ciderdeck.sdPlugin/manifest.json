@@ -1,12 +1,13 @@
 {
 	"SDKVersion": 2,
-	"Author": "Elgato Systems",
 	"CodePath": "app.html",
-	"Description": "Example description",
-	"Name": "Stream Deck Template",
+	"Description": "CiderDeck is a plugin for the StreamDeck that can be used to control Cider and related apps. A free Cider Connect account is required to use this plugin."
+	"Name": "CiderDeck",
 	"Icon": "actions/template/assets/action",
-	"URL": "https://www.elgato.com/en/gaming/stream-deck",
-	"Version": "1.0.0",
+	"Author": "Cider Collective",
+	"URL": "https://cider.sh/deck",
+	"PrivateAPI": true,
+	"Version": "1.0",
 	"Software": {
 		"MinimumVersion": "5.0"
 	},
@@ -42,7 +43,7 @@
 				}
 			],
 			"Tooltip": "This is an example tooltip",
-			"UUID": "com.elgato.template.action",
+			"UUID": "dev.cidercollective.ciderdeck.sdPlugin.action",
 			"PropertyInspectorPath": "actions/template/property-inspector/inspector.html"
 		}
 	]
