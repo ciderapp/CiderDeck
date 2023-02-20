@@ -1,64 +1,29 @@
 
-# Stream Deck Plugin Template
+# CiderDeck
 
-The `Stream Deck Plugin Template` is a template to let you get started quickly when writing a JavaScript plugin for [Stream Deck](https://developer.elgato.com/documentation/stream-deck/). `Stream Deck Plugin Template` requires Stream Deck 6.0 or later.
+CiderDeck is a plugin for the Elgato Stream Deck that allows you to control your music and show what your currently listening to with ease.
 
 ## Description
 
-`Stream Deck Plugin Template` is a complete plugin that shows you how to
+Using CiderDeck you can do the following
 
-- load and save settings using Stream Deck's persistent store
-- setup and communicate with the Property Inspector
-- pass messages directly from Property Inspector to the plugin (and vice versa)
-- localize your Property Inspector's UI to another language
+- Show currently playing song's album art.
+- Show currently playing song's name.
+- Skip/Rewind Songs.
+- Play/Pause Songs.
 
 ## Features
 
-- code written in Javascript
-- cross-platform (macOS, Windows)
-- localization support
-- styled [Property Inspector](https://developer.elgato.com/documentation/stream-deck/sdk/property-inspector/) included
-- Property Inspector contains all required boilerplate code to let you instantly work on your plugin's code.
+- Written in Javascript
+- Cross-Platform (macOS, Windows)
 
-## Quick Start Guide
+## Requirements
+- Cider 2.x (Fujisan)
+- Stream Deck
+- Computer running Windows or macOS
 
-A short guide to help you get started quickly.
+## Installation Guide
 
-### Clone the repo
+Go into the [Releases](github.com/ciderapp/CiderDeck/releases) and download the latest compiled plugin file, double click to open it in the Stream Deck software for installation.
 
-```git clone https://github.com/elgatosf/streamdeck-plugin-template```
-
-### Replace Name
-
-Rename the folder as well as any references.
-
-`com.elgato.template` with `my.domain.plugin-name`
-
-### Get the latest library
-
-Be sure `.gitmodules` has been updated to match your new folder name `my.domain.plugin-name` and then pull the latest libraries.
-
-```git submodule init && git submodule update```
-
-### Start Coding
-
-You can get started in app.js!
-
-```javascript
-const myAction = new Action('com.elgato.template.action');
-
-/**
- * The first event fired when Stream Deck starts
- */
-$SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
-  console.log('Stream Deck connected!');
-});
-
-myAction.onKeyUp(({ action, context, device, event, payload }) => {
-  console.log('Your key code goes here!');
-});
-
-myAction.onDialRotate(({ action, context, device, event, payload }) => {
-  console.log('Your dial code goes here!');
-});
-```
+Done!
