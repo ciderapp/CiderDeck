@@ -7,6 +7,7 @@ steps:
 
 - script: |
     cd src/
+    mkdir release
     DistributionTool.exe -b -i sh.cider.streamdeck.sdPlugin -o release
   displayName: 'Run Distribution Tool'
 
