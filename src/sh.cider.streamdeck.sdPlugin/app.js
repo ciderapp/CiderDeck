@@ -88,7 +88,7 @@ skipAction.onKeyUp(() => {
 
 previousAction.onKeyUp(() => {
 	defuckRPC("Previous");
-	setTimeout(setData, 50);
+	setTimeout(setData, 500);
 });
 
 // Fetch Contexts
