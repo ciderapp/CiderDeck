@@ -1,0 +1,31 @@
+{
+  "Description": "A plugin to provide playback controls and data from your Stream Deck", 
+  "Name": "CiderDeck", 
+  "Category": "Cider", 
+  "sh.cider.streamdeck.songname": {
+    "Name": "Song Name", 
+    "Tooltip": "Provides a tile to show the currently playing song from Cider."
+  },
+  "sh.cider.streamdeck.albumart": {
+    "Name": "Album Art", 
+    "Tooltip": "Provides a tile to show the currently playing song's Album Art from Cider."
+  },
+  "sh.cider.streamdeck.toggle": {
+    "Name": "Toggle Playback", 
+    "Tooltip": "Provides a tile to toggle the currently playing song in Cider."
+  },
+  "sh.cider.streamdeck.skip": {
+    "Name": "Skip", 
+    "Tooltip": "Provides a tile to skip the currently playing song in Cider."
+  },
+  "sh.cider.streamdeck.previous": {
+    "Name": "Previous", 
+    "Tooltip": "Provides a tile to play the previous song in Cider."
+  },
+  "Localization": {
+    "More info": "More info",
+    "Message": "Message",
+    "Click Me": "Click Me",
+    "Button": "Button"
+  }
+}

@@ -1,0 +1,117 @@
+{
+	"SDKVersion": 2,
+	"Author": "Cider Collective",
+	"CodePath": "app.html",
+	"Description": "The official plugin for managing your media through Cider.",
+	"Name": "CiderDeck",
+	"Icon": "actions/playback/assets/icon",
+	"URL": "https://cider.sh",
+	"Version": "1.0.0",
+	"Software": {
+		"MinimumVersion": "5.0"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "10.11"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Category": "Cider",
+	"CategoryIcon": "actions/playback/assets/icon",
+	"Actions": [
+		{
+			"Icon": "actions/playback/assets/song",
+			"Name": "Song Name",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Nothing happens when you press this button."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/blank"
+				}
+			],
+			"Tooltip": "Provides a tile to show the currently playing song from Cider.",
+			"UUID": "sh.cider.streamdeck.songname"
+		},
+		{
+			"Icon": "actions/playback/assets/image",
+			"Name": "Album Art",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Nothing happens when you press this button."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/icon"
+				}
+			],
+			"Tooltip": "Provides a tile to show the currently playing song's Album Art from Cider.",
+			"UUID": "sh.cider.streamdeck.albumart"
+		},
+		{
+			"Icon": "actions/playback/assets/play",
+			"Name": "Toggle Playback",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Pressing this button will toggle playback (Play/Pause) in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/play"
+				}
+			],
+			"Tooltip": "Provides a tile to toggle the currently playing song in Cider.",
+			"UUID": "sh.cider.streamdeck.toggle"
+		},
+		{
+			"Icon": "actions/playback/assets/next",
+			"Name": "Skip Song",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Skips the currently playing song."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/next"
+				}
+			],
+			"Tooltip": "Provides a tile to skip the currently playing song in Cider.",
+			"UUID": "sh.cider.streamdeck.skip"
+		},
+		{
+			"Icon": "actions/playback/assets/previous",
+			"Name": "Previous Song",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Plays the previous song in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/previous"
+				}
+			],
+			"Tooltip": "Provides a tile to play the previous song in Cider.",
+			"UUID": "sh.cider.streamdeck.previous"
+		}
+	]
+}
