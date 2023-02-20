@@ -6,7 +6,8 @@ pool: 'default'
 steps:
 
 - script: |
-    DistributionTool.exe -b -i src/sh.cider.streamdeck.sdPlugin -o src/release
+    cd src/
+    DistributionTool.exe -b -i sh.cider.streamdeck.sdPlugin -o release
   displayName: 'Run Distribution Tool'
 
 - task: PublishBuildArtifacts@1
