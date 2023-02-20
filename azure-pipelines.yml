@@ -1,0 +1,16 @@
+trigger:
+- main
+
+pool: 'default'
+
+steps:
+
+- script: |
+    DistributionTool.exe -b -i src/sh.cider.streamdeck.sdPlugin -o src/release
+  displayName: 'Run Distribution Tool'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(system.defaultWorkingDirectory)/src/release'
+    ArtifactName: 'Packaged'
+    publishLocation: 'Container'
