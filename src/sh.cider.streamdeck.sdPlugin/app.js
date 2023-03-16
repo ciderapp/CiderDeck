@@ -24,16 +24,25 @@ async function setData() {
 		console.log("Playback info is undefined, skipping.")
 
 		// Set defaults.
-		$SD.setImage(window.toggleActionContext, 'actions/playback/assets/play.png', 0);
-		$SD.setImage(window.albumArtActionContext, 'actions/playback/assets/icon.png', 0);
-		$SD.setTitle(window.songNameActionContext, "No Song Playing", 0)
+		if (window.toggleActionContext !== null) {
+			$SD.setImage(window.toggleActionContext, 'actions/playback/assets/play.png', 0);
+		}
+
+		if (window.albumArtActionContext !== null) {
+			$SD.setImage(window.albumArtActionContext, 'actions/playback/assets/icon.png', 0);
+		}
+		
+		if (window.albumArtAction !== null) {
+			$SD.setTitle(window.songNameActionContext, "No Song Playing", 0)
+		}
+
 		return;
 	}
 
 	setPlaybackStatus();
 
 	// Set variables for artwork and song name
-	window.artwork = playbackInfo.result.info.artwork.url.replace('{w}', '100').replace('{h}', '100');
+	window.artwork = playbackInfo.info.artwork.url.replace('{w}', '100').replace('{h}', '100');
 	window.artworkCache;
 	window.songCache;
 
@@ -42,20 +51,24 @@ async function setData() {
 		window.artworkCache = window.artwork;
 		console.log("Artwork is different, updating.")
 		let art64 = await getBase64Image(artwork);
-		$SD.setImage(window.albumArtActionContext, art64, 0);
+		if (window.albumArtActionContext !== null) {
+			$SD.setImage(window.albumArtActionContext, art64, 0);
+		}
 	}
 
-	if (window.songCache !== playbackInfo.result.info.name) {
-		window.songCache = playbackInfo.result.info.name;
+	if (window.songCache !== playbackInfo.info.name) {
+		window.songCache = playbackInfo.info.name;
 		console.log("Song is different, updating.")
-		$SD.setTitle(window.songNameActionContext, playbackInfo.result.info.name, 0)
+		if (window.songNameActionContext !== null) {
+			$SD.setTitle(window.songNameActionContext, playbackInfo.info.name, 0)
+		}
 	}
 
 	// Set Action to use the correct icon
-	if (playbackInfo.result.info.status) {
+	if (playbackInfo.info.status === true || window.toggleActionContext !== null) {
 		$SD.setImage(window.toggleActionContext, 'actions/playback/assets/pause.png', 0);
 	}
-	else {
+	else if (window.toggleActionContext !== null) {
 		$SD.setImage(window.toggleActionContext, 'actions/playback/assets/play.png', 0);
 	}
 }
@@ -63,12 +76,12 @@ async function setData() {
 async function setPlaybackStatus() {
 	// Set Action to use the correct icon
 	let status = await comRPC("GET", "isPlaying");
-	if (window.statusCache !== status.result.isPlaying) {
-		window.statusCache = status.result.isPlaying;
+	if (window.statusCache !== status.is_playing) {
+		window.statusCache = status.is_playing;
 		console.log("Status is different, updating.")
-		if (status.result.isPlaying) {
+		if (status.is_playing === true || window.toggleActionContext !== null) {
 			$SD.setImage(window.toggleActionContext, 'actions/playback/assets/pause.png', 0);
-		} else {
+		} else if (window.toggleActionContext !== null) {
 			$SD.setImage(window.toggleActionContext, 'actions/playback/assets/play.png', 0);
 		}
 	}
