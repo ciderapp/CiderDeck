@@ -180,4 +180,4 @@ function getBase64Image(url) {
 	  };
 	  image.src = url;
 	});
-  }
+}
