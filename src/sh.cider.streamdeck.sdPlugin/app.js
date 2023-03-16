@@ -62,7 +62,7 @@ async function setData() {
 
 async function setPlaybackStatus() {
 	// Set Action to use the correct icon
-	let status = await defuckRPC("IsPlaying");
+	let status = await comRPC("GET", "isPlaying");
 	if (window.statusCache !== status.result.isPlaying) {
 		window.statusCache = status.result.isPlaying;
 		console.log("Status is different, updating.")
@@ -77,17 +77,17 @@ async function setPlaybackStatus() {
 // Key events
 
 toggleAction.onKeyUp(() => {
-	defuckRPC("PlayPause");
+	comRPC("GET", "playPause");
 	setTimeout(setPlaybackStatus, 500);
 });
 
 skipAction.onKeyUp(() => {
-	defuckRPC("Next");
+	comRPC("GET", "next");
 	setTimeout(setData, 500);
 });
 
 previousAction.onKeyUp(() => {
-	defuckRPC("Previous");
+	comRPC("GET", "previous");
 	setTimeout(setData, 500);
 });
 
@@ -121,17 +121,11 @@ albumArtAction.onWillAppear(({ context }) => {
 // Runtime Timer for playback info fetching.
 
 async function grabPlaybackInfo() {
-	const data = {
-		method: 'FujisanRpc.GetCurrentPlayingSong',
-		params: [],
-		id: 1
-	  };
-	return fetch('http://localhost:10782/rpc', {
+	return fetch('http://localhost:10782/getCurrentPlayingSong', {
 		method: 'POST',
 		headers: {
 		  'Content-Type': 'application/json'
 		},
-		body: JSON.stringify(data)
 	})
 	.then(response => response.json())
 	.then(json => {
@@ -142,19 +136,13 @@ async function grabPlaybackInfo() {
 
 // RPC Function for Key Events
 
-async function defuckRPC(request) {
-	let bodyData = {
-		"method": "FujisanRpc."+request,
-		"params": [],
-		"id": 1
-	}
+async function comRPC(method, request) {
 
-	return fetch('http://localhost:10782/rpc', {
-  		method: 'POST',
+	return fetch('http://localhost:10782/'+request, {
+  		method: method,
   		headers: {
     		'Content-Type': 'application/json'
   		},
-  		body: JSON.stringify(bodyData)
 	})
   	.then(response => response.json())
   	.then(json => {
