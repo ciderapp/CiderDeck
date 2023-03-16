@@ -121,7 +121,7 @@ albumArtAction.onWillAppear(({ context }) => {
 // Runtime Timer for playback info fetching.
 
 async function grabPlaybackInfo() {
-	return fetch('http://localhost:10782/getCurrentPlayingSong', {
+	return fetch('http://localhost:10769/currentPlayingSong', {
 		method: 'GET',
 		headers: {
 		  'Content-Type': 'application/json'
@@ -138,7 +138,7 @@ async function grabPlaybackInfo() {
 
 async function comRPC(method, request) {
 
-	return fetch('http://localhost:10782/'+request, {
+	return fetch('http://localhost:10769/'+request, {
   		method: method,
   		headers: {
     		'Content-Type': 'application/json'
