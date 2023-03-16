@@ -18,7 +18,7 @@ Using CiderDeck you can do the following
 - Cross-Platform (macOS, Windows)
 
 ## Requirements
-- Cider 2.x (Fujisan)
+- Cider 2.x (Sabiiro)
 - Stream Deck
 - Computer running Windows or macOS
 
