@@ -122,7 +122,7 @@ albumArtAction.onWillAppear(({ context }) => {
 
 async function grabPlaybackInfo() {
 	return fetch('http://localhost:10782/getCurrentPlayingSong', {
-		method: 'POST',
+		method: 'GET',
 		headers: {
 		  'Content-Type': 'application/json'
 		},
