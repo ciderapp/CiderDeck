@@ -14,7 +14,7 @@ Using CiderDeck you can do the following
 
 ## Features
 
-- Written in Javascript
+- Written in JavaScript
 - Cross-Platform (macOS, Windows)
 
 ## Requirements
