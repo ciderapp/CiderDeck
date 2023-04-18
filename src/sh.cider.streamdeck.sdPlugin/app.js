@@ -128,16 +128,12 @@ async function comRPC(method, request) {
 }
 // Utility Functions
 function setImage(action, image, context) {
-	console.log("[DEBUG] IM GETTING CALLED IMAGE")
 	if (action !== null && image !== null && context !== null) {
-		console.log("[DEBUG] IM GETTING CALLED IMAGE 2")
 		$SD.setImage(action, image, context);
 	}
 }
 function setTitle(action, title, context) {
-	console.log("[DEBUG] IM GETTING CALLED SONG")
 	if (action !== null && title !== null && context !== null) {
-		console.log("[DEBUG] IM GETTING CALLED SONG 2")
 		$SD.setTitle(action, title, context);
 	}
 }
