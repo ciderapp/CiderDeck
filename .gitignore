@@ -5,3 +5,4 @@ com.elgato.template.streamDeckPlugin
 .vscode/**
 package.json
 .history
+src/Release/sh.cider.streamdeck.streamDeckPlugin
