@@ -9,8 +9,11 @@ Using CiderDeck you can do the following
 
 - Show currently playing song's album art.
 - Show currently playing song's name.
-- Skip/Rewind Songs.
-- Play/Pause Songs.
+- Skip/Rewind
+- Play/Pause
+- Change Volume
+- Like/Dislike
+- Add to Library
 
 ## Features
 
@@ -18,7 +21,7 @@ Using CiderDeck you can do the following
 - Cross-Platform (macOS, Windows)
 
 ## Requirements
-- Cider 2.x (Sabiiro)
+- Cider 2.3+ (Sabiiro)
 - Stream Deck
 - Computer running Windows or macOS
 
