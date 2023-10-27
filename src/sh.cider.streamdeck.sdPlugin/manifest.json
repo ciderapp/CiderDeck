@@ -78,6 +78,96 @@
 			"UUID": "sh.cider.streamdeck.toggle"
 		},
 		{
+			"Icon": "actions/playback/assets/volup",
+			"Name": "Volume Up",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Pressing this button will raise the volume by 10% in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/volup"
+				}
+			],
+			"Tooltip": "Provides a tile to raise the volume in Cider.",
+			"UUID": "sh.cider.streamdeck.volumeup"
+		},
+		{
+			"Icon": "actions/playback/assets/voldown",
+			"Name": "Volume Down",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Pressing this button will lower the volume by 10% in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/voldown"
+				}
+			],
+			"Tooltip": "Provides a tile to lower the volume in Cider.",
+			"UUID": "sh.cider.streamdeck.volumedown"
+		},
+		{
+			"Icon": "actions/playback/assets/add",
+			"Name": "Add To Library",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Pressing this button will toggle if the song should be added to the Library in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/add"
+				}
+			],
+			"Tooltip": "Provides a tile to add/remove the currently playing song from your library in Cider.",
+			"UUID": "sh.cider.streamdeck.addtolibrary"
+		},
+		{
+			"Icon": "actions/playback/assets/dislike",
+			"Name": "Dislike",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Pressing this button will depict if the song should be disliked or not in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/dislike"
+				}
+			],
+			"Tooltip": "Provides a tile to dislike the currently playing song in Cider.",
+			"UUID": "sh.cider.streamdeck.dislike"
+		},
+		{
+			"Icon": "actions/playback/assets/like",
+			"Name": "Favorite",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Pressing this button will depict if the song should be favorited or not in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/like"
+				}
+			],
+			"Tooltip": "Provides a tile to like the currently playing song in Cider.",
+			"UUID": "sh.cider.streamdeck.like"
+		},
+		{
 			"Icon": "actions/playback/assets/next",
 			"Name": "Skip Song",
 			"Controllers": ["Keypad"],
@@ -112,6 +202,24 @@
 			],
 			"Tooltip": "Provides a tile to play the previous song in Cider.",
 			"UUID": "sh.cider.streamdeck.previous"
+		},
+		{
+			"Icon": "actions/playback/assets/icon",
+			"Name": "Cider Logo",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Nothing happens when you press this button."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/icon"
+				}
+			],
+			"Tooltip": "Simple tile to show the Cider logo, useful for decorative purposes.",
+			"UUID": "sh.cider.streamdeck.ciderlogo"
 		}
 	]
 }

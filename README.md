@@ -1,7 +1,7 @@
 
 # CiderDeck
 
-CiderDeck is a plugin for the Elgato Stream Deck that allows you to control your music and show what your currently listening to with ease.
+CiderDeck is a plugin for the Elgato Stream Deck that allows you to control your music and show what your currently listening to at a click of a button.
 
 ## Description
 
@@ -9,17 +9,19 @@ Using CiderDeck you can do the following
 
 - Show currently playing song's album art.
 - Show currently playing song's name.
-- Skip/Rewind Songs.
-- Play/Pause Songs.
+- Skip/Rewind
+- Play/Pause
+- Change Volume
+- Like/Dislike
+- Add to Library
 
 ## Features
-
 - Written in JavaScript
 - Cross-Platform (macOS, Windows)
 
 ## Requirements
-- Cider 2.x (Sabiiro)
-- Stream Deck
+- [Cider 2.3+ (Sabiiro)](https://cider.sh)
+- Stream Deck (MK.1, MK.2, SD+, XL)
 - Computer running Windows or macOS
 
 ## Installation Guide
