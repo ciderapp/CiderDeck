@@ -12,6 +12,7 @@ const dislikeAction = new Action('sh.cider.streamdeck.dislike');
 const addToLibraryAction = new Action('sh.cider.streamdeck.addtolibrary');
 const volumeUpAction = new Action('sh.cider.streamdeck.volumeup');
 const volumeDownAction = new Action('sh.cider.streamdeck.volumedown');
+const ciderLogoAction = new Action('sh.cider.streamdeck.ciderlogo');
 
 /**
  * The first event fired when Stream Deck starts
@@ -109,6 +110,10 @@ async function setDefaults () {
 
 	window.contexts.volumeDownAction.forEach(function (context) {
 		setImage(context, 'actions/playback/assets/volumedown.png', 0);
+	});
+
+	window.contexts.ciderLogoAction.forEach(function (context) {
+		setImage(context, 'actions/playback/assets/icon.png', 0);
 	});
 }
 
@@ -345,7 +350,8 @@ window.contexts = {
     dislikeAction : [],
 	addToLibraryAction : [],
 	volumeUpAction : [],
-	volumeDownAction : []
+	volumeDownAction : [],
+	ciderLogoAction : []
 };
 
 // Await the contexts and add them to the array.
@@ -400,6 +406,11 @@ volumeDownAction.onWillAppear(({ context }) => {
 		window.contexts.volumeDownAction.push(context);
 	}
 });
+ciderLogoAction.onWillAppear(({ context }) => {
+	if (window.contexts.ciderLogoAction.indexOf(context) === -1) {
+		window.contexts.ciderLogoAction.push(context);
+	}
+});
 
 // Handle onWillDisappear events
 
@@ -451,6 +462,11 @@ volumeUpAction.onWillDisappear(({ context }) => {
 volumeDownAction.onWillDisappear(({ context }) => {
 	if (window.contexts.volumeDownAction.indexOf(context) > -1) {
 		window.contexts.volumeDownAction.splice(window.contexts.volumeDownAction.indexOf(context), 1);
+	}
+});
+ciderLogoAction.onWillDisappear(({ context }) => {
+	if (window.contexts.ciderLogoAction.indexOf(context) > -1) {
+		window.contexts.ciderLogoAction.splice(window.contexts.ciderLogoAction.indexOf(context), 1);
 	}
 });
 

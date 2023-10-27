@@ -42,7 +42,7 @@
 			"UUID": "sh.cider.streamdeck.songname"
 		},
 		{
-			"Icon": "actions/playback/assets/add",
+			"Icon": "actions/playback/assets/image",
 			"Name": "Album Art",
 			"Controllers": ["Keypad"],
 			"Encoder": {
@@ -202,6 +202,24 @@
 			],
 			"Tooltip": "Provides a tile to play the previous song in Cider.",
 			"UUID": "sh.cider.streamdeck.previous"
+		},
+		{
+			"Icon": "actions/playback/assets/icon",
+			"Name": "Cider Logo",
+			"Controllers": ["Keypad"],
+			"Encoder": {
+				"layout": "$B1",
+				"TriggerDescription": {
+					"Touch": "Nothing happens when you press this button."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/icon"
+				}
+			],
+			"Tooltip": "Simple tile to show the Cider logo, useful for decorative purposes.",
+			"UUID": "sh.cider.streamdeck.ciderlogo"
 		}
 	]
 }
