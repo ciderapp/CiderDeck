@@ -171,7 +171,8 @@ async function setAdaptiveData(libraryInfo) {
 	return;
 }
 
-// Album Art & Song Name event handling
+// Album Art / Song Name / Status event handling
+
 async function setData(playbackInfo) {
 	setPlaybackStatus(playbackInfo.data?.status);
 
@@ -194,10 +195,6 @@ async function setData(playbackInfo) {
 	if (window.songCache !== playbackInfo.data?.name) {
 		window.songCache = playbackInfo.data?.name;
 		console.debug("[DEBUG] [SongName] Song is different, updating.")
-		window.addedToLibrary = false;
-		window.contexts.addToLibraryAction.forEach(function (context) {
-			setImage(context, 'actions/playback/assets/add.png', 0);
-		});
         window.contexts.songNameAction.forEach(function (context) {
 		    setTitle(context, playbackInfo.data?.name, 0)
         });
