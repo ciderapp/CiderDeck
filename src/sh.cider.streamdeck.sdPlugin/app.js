@@ -36,21 +36,31 @@ function startWebSocket() {
 		// Set up websocket artwork/information handling
 
 		CiderApp.addEventListener("message", (event) => {
-			if (event.data !== undefined || event.data !== null) {
-				try {
-					let playbackInfo = JSON.parse(event.data);
 
-					if (playbackInfo.data?.status !== undefined || playbackInfo.data?.artwork?.url !== undefined || playbackInfo.data?.name !== undefined) {
-						setData(playbackInfo);
-					} else {
-						console.debug("[DEBUG] [Init] PlaybackInfo is undefined or null, skipping to avoid errors.")
-					}
-				} catch (error) {
-					console.debug('[DEBUG] [Init] Websocket parsing error:', error);
-				}
-			} else {
+			// Parse data if it's not null or undefined.
+			let parsedEvent;
+
+			try {
+				parsedEvent = JSON.parse(event.data);
+			} catch (error) {
+				console.debug("[DEBUG] [Init] Websocket message is not JSON, skipping.")
+				return;
+			}
+
+			// Check if the event is null or undefined, if so, set defaults.
+			if (event.data === undefined || event.data === null) {
 				console.log("[DEBUG] [Init] Websocket message is undefined or null, skipping.")
 				setDefaults();
+				return;
+			}
+			
+			// Check nowPlayingStatusDidChange event, set library and like/dislike status into cache and update the context.
+			if (parsedEvent.type === "playbackStatus.nowPlayingStatusDidChange") {
+				setAdaptiveData(parsedEvent.data);
+			} else if (parsedEvent.type === "playbackStatus.playbackTimeDidChange") {
+				if (parsedEvent.data?.status !== undefined || parsedEvent.data?.artwork?.url !== undefined || parsedEvent.data?.name !== undefined) {
+					setData(parsedEvent);
+				}
 			}
 		});
 
@@ -117,8 +127,51 @@ async function setDefaults () {
 	});
 }
 
+async function setAdaptiveData(libraryInfo) {
+	// Set library icon depending on current song library status.
+
+	switch (libraryInfo?.inLibrary) {
+		case true:
+			window.contexts.addToLibraryAction.forEach(function (context) {
+				setImage(context, 'actions/playback/assets/check.png', 0);
+			});
+			window.addedToLibrary = true;
+			break;
+		case false:
+			window.contexts.addToLibraryAction.forEach(function (context) {
+				setImage(context, 'actions/playback/assets/add.png', 0);
+			});
+			window.addedToLibrary = false;
+			break;
+	}
+
+	// Set like/dislike icons depending on current song rating.
+
+	switch (libraryInfo?.inFavorites) {
+		case true:
+			window.contexts.likeAction.forEach(function (context) {
+				setImage(context, 'actions/playback/assets/liked.png', 0);
+			});
+			window.contexts.dislikeAction.forEach(function (context) {
+				setImage(context, 'actions/playback/assets/dislike.png', 0);
+			});
+			window.ratingCache = 1;
+			break;
+		case false:
+			window.contexts.likeAction.forEach(function (context) {
+				setImage(context, 'actions/playback/assets/like.png', 0);
+			});
+			window.contexts.dislikeAction.forEach(function (context) {
+				setImage(context, 'actions/playback/assets/dislike.png', 0);
+			});
+			window.ratingCache = 0;
+			break;
+	}
+
+	return;
+}
+
 // Album Art & Song Name event handling
-// TODO: REMOVE WITH WEBSOCKETS
 async function setData(playbackInfo) {
 	setPlaybackStatus(playbackInfo.data?.status);
 
@@ -148,42 +201,6 @@ async function setData(playbackInfo) {
         window.contexts.songNameAction.forEach(function (context) {
 		    setTitle(context, playbackInfo.data?.name, 0)
         });
-
-		// Set like/dislike icons depending on current song rating.
-		comRPC("GET", `rating/${playbackInfo.data?.playParams?.kind}/${playbackInfo.data?.playParams?.id}`).then((ratingData) => {
-
-			if (ratingData[0]?.attributes?.value === undefined) {
-				ratingData = [{attributes: {value: 0}}];
-				window.ratingCache = ratingData[0]?.attributes?.value ?? 0;
-			}
-
-			switch (ratingData[0].attributes.value) {
-				case 1:
-					window.contexts.likeAction.forEach(function (context) {
-						setImage(context, 'actions/playback/assets/liked.png', 0);
-					});
-					window.contexts.dislikeAction.forEach(function (context) {
-						setImage(context, 'actions/playback/assets/dislike.png', 0);
-					});
-					break;
-				case -1:
-					window.contexts.likeAction.forEach(function (context) {
-						setImage(context, 'actions/playback/assets/like.png', 0);
-					});
-					window.contexts.dislikeAction.forEach(function (context) {
-						setImage(context, 'actions/playback/assets/disliked.png', 0);
-					});
-					break;
-				case 0:
-					window.contexts.likeAction.forEach(function (context) {
-						setImage(context, 'actions/playback/assets/like.png', 0);
-					});
-					window.contexts.dislikeAction.forEach(function (context) {
-						setImage(context, 'actions/playback/assets/dislike.png', 0);
-					});
-					break;
-				}
-		});
 	}
 
 	// Set Action to use the correct icon
@@ -223,7 +240,7 @@ async function setPlaybackStatus(status) {
 
 // Library status event handling
 
-async function addToLibrary() {
+async function addToLibrary(playbackInfo) {
 	if (!window.addedToLibrary) {
 		comRPC("GET", "addToLibrary", true);
 		window.contexts.addToLibraryAction.forEach(function (context) {
@@ -264,7 +281,7 @@ async function setVolume(direction) {
 async function setRating(rating) {
 	if (window.ratingCache !== rating) {
 		console.debug("[DEBUG] [Status] Rating is different, updating.")
-		comRPC("PUT", `rating/${await window.kind}/${await window.id}/${rating}`, true);
+		comRPC("PUT", `setRating/${rating}`, true);
 		switch (rating) {
 			case 1:
 				window.contexts.likeAction.forEach(function (context) {
