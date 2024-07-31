@@ -6,7 +6,7 @@
 	"Name": "CiderDeck",
 	"Icon": "actions/playback/assets/icon",
 	"URL": "https://cider.sh",
-	"Version": "1.0.0",
+	"Version": "2.5.0",
 	"Software": {
 		"MinimumVersion": "5.0"
 	},
@@ -39,7 +39,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to show the currently playing song from Cider.",
-			"UUID": "sh.cider.streamdeck.songname"
+			"UUID": "sh.cider.streamdeck.songname",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/image",
@@ -57,7 +58,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to show the currently playing song's Album Art from Cider.",
-			"UUID": "sh.cider.streamdeck.albumart"
+			"UUID": "sh.cider.streamdeck.albumart",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/play",
@@ -75,7 +77,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to toggle the currently playing song in Cider.",
-			"UUID": "sh.cider.streamdeck.toggle"
+			"UUID": "sh.cider.streamdeck.toggle",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/volup",
@@ -93,7 +96,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to raise the volume in Cider.",
-			"UUID": "sh.cider.streamdeck.volumeup"
+			"UUID": "sh.cider.streamdeck.volumeup",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/voldown",
@@ -111,7 +115,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to lower the volume in Cider.",
-			"UUID": "sh.cider.streamdeck.volumedown"
+			"UUID": "sh.cider.streamdeck.volumedown",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/add",
@@ -129,7 +134,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to add/remove the currently playing song from your library in Cider.",
-			"UUID": "sh.cider.streamdeck.addtolibrary"
+			"UUID": "sh.cider.streamdeck.addtolibrary",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/dislike",
@@ -147,7 +153,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to dislike the currently playing song in Cider.",
-			"UUID": "sh.cider.streamdeck.dislike"
+			"UUID": "sh.cider.streamdeck.dislike",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/like",
@@ -165,7 +172,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to like the currently playing song in Cider.",
-			"UUID": "sh.cider.streamdeck.like"
+			"UUID": "sh.cider.streamdeck.like",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/next",
@@ -183,7 +191,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to skip the currently playing song in Cider.",
-			"UUID": "sh.cider.streamdeck.skip"
+			"UUID": "sh.cider.streamdeck.skip",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/previous",
@@ -201,7 +210,8 @@
 				}
 			],
 			"Tooltip": "Provides a tile to play the previous song in Cider.",
-			"UUID": "sh.cider.streamdeck.previous"
+			"UUID": "sh.cider.streamdeck.previous",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		},
 		{
 			"Icon": "actions/playback/assets/icon",
@@ -219,7 +229,8 @@
 				}
 			],
 			"Tooltip": "Simple tile to show the Cider logo, useful for decorative purposes.",
-			"UUID": "sh.cider.streamdeck.ciderlogo"
+			"UUID": "sh.cider.streamdeck.ciderlogo",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
 		}
 	]
 }
