@@ -101,13 +101,15 @@ async function checkAuthKey() {
     }
     try {
         const data = await comRPC("GET", "active", true);
-        if (data.error) {
+        if (data.error || undefined || null) {
             alertContexts();
+            $SD.getGlobalSettings();
         } else {
             startWebSocket();
         }
     } catch (error) {
         alertContexts();
+        $SD.getGlobalSettings();
     }
 }
 
@@ -144,7 +146,8 @@ function startWebSocket() {
         CiderApp.onerror = () => setTimeout(checkAuthKey, 5000);
 
     } catch (error) {
-        setTimeout(startWebSocket, 5000);
+        // Retry connection on failure.
+        $SD.getGlobalSettings();
     }
 }
 
@@ -178,7 +181,7 @@ async function setAdaptiveData({ inLibrary, inFavorites }) {
 async function setData({ state, attributes }) {
     setPlaybackStatus(state);
 
-    const artwork = attributes.artwork?.url?.replace('{w}', attributes.artwork.width).replace('{h}', attributes.artwork.height);
+    const artwork = attributes.artwork?.url?.replace('{w}', attributes?.artwork?.width).replace('{h}', attributes?.artwork?.height);
     const songName = attributes.name;
     const artistName = attributes.artistName;
     const albumName = attributes.albumName;
