@@ -26,6 +26,6 @@ Using CiderDeck you can do the following
 
 ## Installation Guide
 
-Go into the [Releases](github.com/ciderapp/CiderDeck/releases) and download the latest compiled plugin file, double click to open it in the Stream Deck software for installation.
+Go into the [Releases](https://github.com/ciderapp/CiderDeck/releases) and download the latest compiled plugin file, double click to open it in the Stream Deck software for installation.
 
 Done!
