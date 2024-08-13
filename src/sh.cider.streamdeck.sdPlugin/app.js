@@ -113,11 +113,11 @@ async function checkAuthKey() {
     }
 }
 
-function startWebSocket() {
+async function startWebSocket() {
     try {
         const CiderApp = io('http://localhost:10767');
 
-        comRPC("GET", "now-playing").then(data => {
+        await comRPC("GET", "now-playing").then(data => {
             if (data.status === "ok") {
                 setManualData(data.info);
                 setAdaptiveData(data.info);
@@ -223,7 +223,7 @@ async function setPlaybackStatus(status) {
 
 async function addToLibrary() {
     if (!window.addedToLibrary) {
-        comRPC("POST", "add-to-library", true);
+        await comRPC("POST", "add-to-library", true);
         window.contexts.addToLibraryAction?.forEach(context => setImage(context, 'actions/playback/assets/check.png', 0));
         window.addedToLibrary = true;
         console.debug("[DEBUG] [Library] Added to library");
@@ -250,7 +250,7 @@ async function setVolume(direction) {
 
 async function setRating(ratingValue) {
     if (window.ratingCache !== ratingValue) {
-        comRPC("POST", "set-rating", true, { rating: ratingValue });
+        await comRPC("POST", "set-rating", true, { rating: ratingValue });
 
         const likeIcon = ratingValue === 1 ? 'liked.png' : 'like.png';
         const dislikeIcon = ratingValue === -1 ? 'disliked.png' : 'dislike.png';
