@@ -20,7 +20,7 @@ Using CiderDeck you can do the following
 - Cross-Platform (macOS, Windows)
 
 ## Requirements
-- [Cider 2.3+ (Sabiiro)](https://cider.sh)
+- [Cider 2.5+](https://cider.sh)
 - Stream Deck (MK.1, MK.2, SD+, XL)
 - Computer running Windows or macOS
 
