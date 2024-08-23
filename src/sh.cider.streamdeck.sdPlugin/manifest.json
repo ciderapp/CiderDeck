@@ -1,9 +1,9 @@
 {
-	"SDKVersion": 2,
 	"Author": "Cider Collective",
 	"CodePath": "app.html",
 	"Description": "The official plugin for managing your media through Cider.",
 	"Name": "CiderDeck",
+	"SDKVersion": 2,
 	"Icon": "actions/playback/assets/icon",
 	"URL": "https://cider.sh",
 	"Version": "2.5.0",
@@ -23,6 +23,31 @@
 	"Category": "Cider",
 	"CategoryIcon": "actions/playback/assets/icon",
 	"Actions": [
+		{
+			"Icon": "actions/playback/assets/song",
+			"Name": "Cider Playback",
+			"Controllers": ["Encoder"],
+			"DisableAutomaticStates": false,
+			"Encoder": {
+				"Icon": "actions/playback/assets/icon",
+				"layout": "$C1",
+				"TriggerDescription": {
+					"Push": "Mute/unmute the volume in Cider.",
+					"Left": "Lower the volume by 1% in Cider.",
+					"Right": "Raise the volume by 1% in Cider.",
+					"Touch": "Play/Pause the currently playing song in Cider."
+				}
+			},
+			"States": [
+				{
+					"Image": "actions/playback/assets/icon"
+				}
+			],
+			"SupportedInMultiActions": false,
+			"Tooltip": "Provides various controls for managing your media through Cider.",
+			"UUID": "sh.cider.streamdeck.playback",
+			"PropertyInspectorPath": "actions/authorization/inspector.html"
+		},
 		{
 			"Icon": "actions/playback/assets/song",
 			"Name": "Song Name",

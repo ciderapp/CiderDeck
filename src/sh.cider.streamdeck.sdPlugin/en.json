@@ -2,6 +2,10 @@
   "Description": "A plugin to provide playback controls and data from your Stream Deck", 
   "Name": "CiderDeck", 
   "Category": "Cider", 
+  "sh.cider.streamdeck.playback": {
+    "Name": "Cider Playback", 
+    "Tooltip": "Provides various controls for managing your media through Cider."
+  },
   "sh.cider.streamdeck.songname": {
     "Name": "Song Name", 
     "Tooltip": "Provides a tile to show the currently playing song from Cider."
