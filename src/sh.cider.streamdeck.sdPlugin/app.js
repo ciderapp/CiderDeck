@@ -193,7 +193,7 @@ async function startWebSocket() {
                 setAdaptiveData(data.info);
 
                 if(window.contexts.ciderPlaybackAction[0]) {
-                    initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction);
+                    initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0]);
                 };
             }
         }).catch(console.error);
