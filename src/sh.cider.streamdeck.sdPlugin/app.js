@@ -25,23 +25,10 @@ const actions = {
     ciderPlaybackAction: new Action('sh.cider.streamdeck.playback')
 };
 
-let marqueeInterval;
-let marqueePosition = 0;
-let currentMarqueeText = '';
-let isScrolling = false;
-let MARQUEE_SPEED = 200; // Default value
-let MARQUEE_STEP = 1;
-let PAUSE_DURATION = 2000; // Default value
-let DISPLAY_LENGTH = 15; // Default value
-let marqueeEnabled = true;
-
-let tapBehavior = 'addToLibrary';
-
-let volumeStep = 1;
-let pressBehavior = 'togglePlay';
-
-let useAdaptiveIcons = false;
-let rpcKey = null;
+let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
+let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15;
+let marqueeEnabled = true, tapBehavior = 'addToLibrary', volumeStep = 1, pressBehavior = 'togglePlay';
+let useAdaptiveIcons = false, rpcKey = null;
 
 // Ensure window.contexts is initialized
 window.contexts = window.contexts || {};
