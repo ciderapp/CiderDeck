@@ -19,8 +19,12 @@ function loadSettings() {
             value = globalSettings.marqueeSettings?.[settingName === 'enableMarquee' ? 'enabled' : settingName];
         } else if (settingName === 'authKey') {
             value = globalSettings.authorization?.rpcKey;
-            console.log('authKey value:', value);
-            console.log('globalSettings:', globalSettings);
+        } else if (settingName === 'tapBehavior') {
+            value = globalSettings.tapSettings?.tapBehavior;
+        } else if (settingName === 'pressBehavior') {
+            value = globalSettings.knobSettings?.pressBehavior;
+        } else if (settingName === 'volumeStep') {
+            value = globalSettings.knobSettings?.volumeStep;
         }
 
         if (element.type === 'checkbox') {
@@ -31,6 +35,7 @@ function loadSettings() {
             element.value = value ?? element.value;
         } else if (element.type === 'range') {
             element.value = value ?? element.value;
+            console.log('Setting range value:', element.value);
         } else {
             element.value = value ?? '';
         }
