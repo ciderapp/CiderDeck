@@ -161,7 +161,7 @@ $SD.onDidReceiveGlobalSettings(({ payload }) => {
     }
 
     if (payload.settings.tapSettings) {
-        pressBehavior = payload.settings.tapSettings.tapBehavior || 'addToLibrary';
+        tapBehavior = payload.settings.tapSettings.tapBehavior || 'addToLibrary';
     }
 
     if (payload.settings.knobSettings) {
