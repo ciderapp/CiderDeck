@@ -26,7 +26,7 @@ const actions = {
 };
 
 let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
-let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15;
+let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15; lastMarqueeUpdateTime = 0;
 let marqueeEnabled = true, tapBehavior = 'addToLibrary', volumeStep = 1, pressBehavior = 'togglePlay';
 let useAdaptiveIcons = false, rpcKey = null;
 
@@ -278,14 +278,13 @@ async function setData({ state, attributes }) {
     if (window.songCache !== songName) {
         window.songCache = songName;
         window.contexts.songNameAction?.forEach(context => setTitle(context, songName, 0));
-        if (window.contexts.ciderPlaybackAction[0]) {
-            const fullTitle = `${songName} - ${albumName}`;
-            clearMarquee();
-            if (marqueeEnabled) {
-                startMarquee(window.contexts.ciderPlaybackAction[0], fullTitle);
-            } else {
-                $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "title": fullTitle });
-            }
+        const fullTitle = `${songName} - ${albumName}`;
+        clearMarquee();
+        if (marqueeEnabled && fullTitle.length > DISPLAY_LENGTH && window.contexts.ciderPlaybackAction[0]) {
+          const allContexts = [window.contexts.ciderPlaybackAction[0]];
+          startMarquee(allContexts, fullTitle);
+        } else {
+          $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "title": fullTitle });
         }
         logMessage += `Updated song: ${songName}; Artist: ${artistName}; Album: ${albumName}; `;
     }
@@ -482,53 +481,62 @@ function setTitle(action, title, context) {
 }
 
 function clearMarquee() {
-    if (marqueeInterval) {
-        clearInterval(marqueeInterval);
-        marqueeInterval = null;
-    }
-    marqueePosition = 0;
-    currentMarqueeText = '';
-    isScrolling = false;
+  if (marqueeInterval) {
+      clearInterval(marqueeInterval);
+      marqueeInterval = null;
+  }
+  marqueePosition = 0;
+  currentMarqueeText = '';
+  isScrolling = false;
+  lastMarqueeUpdateTime = 0;
 }
 
-function startMarquee(context, text) {
-    clearMarquee();
-    currentMarqueeText = text;
-    updateMarqueeDisplay(context);
-    
-    setTimeout(() => {
-        isScrolling = true;
-        marqueeInterval = setInterval(() => {
-            if (isScrolling) {
-                marqueePosition += MARQUEE_STEP;
-                updateMarqueeDisplay(context);
-            }
-        }, MARQUEE_SPEED);
-    }, PAUSE_DURATION);
+function startMarquee(contexts, text) {
+  clearMarquee();
+  currentMarqueeText = text;
+  
+  // Update display for all contexts
+  updateMarqueeForAllContexts(contexts);
+  
+  setTimeout(() => {
+      isScrolling = true;
+      marqueeInterval = setInterval(() => {
+          const currentTime = Date.now();
+          if (isScrolling && (currentTime - lastMarqueeUpdateTime) >= MARQUEE_SPEED) {
+              marqueePosition += MARQUEE_STEP;
+              updateMarqueeForAllContexts(contexts);
+              lastMarqueeUpdateTime = currentTime;
+          }
+      }, Math.max(MARQUEE_SPEED / 2, 16)); // Run the interval more frequently, but update based on time
+  }, PAUSE_DURATION);
+}
+
+function updateMarqueeForAllContexts(contexts) {
+  contexts.forEach(context => updateMarqueeDisplay(context));
 }
 
 function updateMarqueeDisplay(context) {
-    const totalTextLength = currentMarqueeText.length;
-    
-    if (marqueePosition >= totalTextLength) {
-        isScrolling = false;
-        marqueePosition = 0;
-        updateMarqueeDisplay(context); // Display the start immediately
-        setTimeout(() => {
-            isScrolling = true;
-        }, PAUSE_DURATION);
-        return;
-    }
-    
-    let visibleText = currentMarqueeText.substr(marqueePosition, DISPLAY_LENGTH);
-    
-    // Pad with spaces if we're near the end to avoid text wrapping
-    if (visibleText.length < DISPLAY_LENGTH) {
-        visibleText = visibleText.padEnd(DISPLAY_LENGTH, ' ');
-    }
-    
-    //console.log(`Marquee position: ${marqueePosition}, Scrolling: ${isScrolling}, Displaying: "${visibleText}"`);
-    $SD.setFeedback(context, { "title": visibleText });
+  const totalTextLength = currentMarqueeText.length;
+  
+  if (marqueePosition >= totalTextLength) {
+      isScrolling = false;
+      marqueePosition = 0;
+      updateMarqueeDisplay(context); // Display the start immediately
+      setTimeout(() => {
+          isScrolling = true;
+          lastMarqueeUpdateTime = Date.now(); // Reset the last update time
+      }, PAUSE_DURATION);
+      return;
+  }
+  
+  let visibleText = currentMarqueeText.substr(marqueePosition, DISPLAY_LENGTH);
+  
+  // Pad with spaces if we're near the end to avoid text wrapping
+  if (visibleText.length < DISPLAY_LENGTH) {
+      visibleText = visibleText.padEnd(DISPLAY_LENGTH, ' ');
+  }
+  
+  $SD.setFeedback(context, { "title": visibleText });
 }
 
 function getBase64Image(url) {
