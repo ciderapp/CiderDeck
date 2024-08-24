@@ -339,7 +339,6 @@ async function setData({ state, attributes }) {
 }
 
 async function setManualData(playbackInfo) {
-    console.log(playbackInfo)
     setData({ state: playbackInfo.state, attributes: playbackInfo });
 }
 
