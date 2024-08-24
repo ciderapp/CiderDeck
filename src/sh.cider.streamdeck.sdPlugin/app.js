@@ -1,10 +1,34 @@
+// ==========================================================================
+//  Cider Stream Deck Plugin - Main Application
+// ==========================================================================
+//  This file contains the main logic for the Cider Stream Deck plugin.
+//  It handles communication with the Stream Deck, manages actions,
+//  and interacts with the Cider application.
+// ==========================================================================
+
 /// <reference path="libs/js/action.js" />
 /// <reference path="libs/js/stream-deck.js" />
 
-// RPC Authorization (Required for Cider 2.5.x and above)
+// ==========================================================================
+//  Global State
+// ==========================================================================
+
+const AppState = {
+    STARTING_UP: 'starting_up',
+    READY: 'ready',
+    ERROR: 'error'
+};
+
+let currentAppState = AppState.STARTING_UP;
+let isAuthenticated = false;
+
+// ==========================================================================
+//  Initialization and Setup
+// ==========================================================================
 
 $SD.onConnected(() => {
     console.debug('[DEBUG] [System] Stream Deck connected!');
+    currentAppState = AppState.STARTING_UP;
     setDefaults();
     $SD.getGlobalSettings();
 });
@@ -25,6 +49,7 @@ const actions = {
     ciderPlaybackAction: new Action('sh.cider.streamdeck.playback')
 };
 
+// Global variables
 let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
 let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15; lastMarqueeUpdateTime = 0;
 let marqueeEnabled = true, tapBehavior = 'addToLibrary', volumeStep = 1, pressBehavior = 'togglePlay';
@@ -33,76 +58,10 @@ let useAdaptiveIcons = false, rpcKey = null;
 // Ensure window.contexts is initialized
 window.contexts = window.contexts || {};
 
-actions.ciderPlaybackAction.onTouchTap(() => {
-    console.debug(`[DEBUG] [Action] ciderPlaybackAction action tapped.`);
-    switch (tapBehavior) {
-        case 'addToLibrary':
-            addToLibrary();
-            break;
-        case 'favorite':
-            setRating(1);
-            break;
-        default:
-            addToLibrary();
-            setRating(1);
-            break;
-    }
-});
+// ==========================================================================
+//  Context Management
+// ==========================================================================
 
-actions.ciderPlaybackAction.onDialDown(() => {
-    console.debug(`[DEBUG] [Action] ciderPlaybackAction dial pressed`);
-    switch (pressBehavior) {
-        case 'togglePlay':
-            comRPC("POST", "playpause");
-            break;
-        case 'toggleMute':
-            muteVolume();
-            break;
-        default:
-            comRPC("POST", "playpause");
-            break;
-    }
-});
-
-
-actions.ciderPlaybackAction.onDialRotate((jsonObj) => {
-    setPreciseVolume(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0], jsonObj.payload, volumeStep);
-});
-
-// Populate the initial state of the plugin on page shift.
-
-actions.ciderPlaybackAction.onWillAppear(({ context }) => {
-    if (window.contexts.ciderPlaybackAction[0] === context) {
-        initialize();
-    }
-});
-
-actions.albumArtAction.onWillAppear(({ context }) => {
-    if (!window.contexts.ciderPlaybackAction[0]) {
-        initialize();
-    }
-});
-
-// Handle disappearing contexts
-
-actions.ciderPlaybackAction.onWillDisappear(() => {
-    console.debug(`[DEBUG] [Action] ciderPlaybackAction action disappeared.`);
-    clearMarquee();
-    window.artworkCache = null;
-    window.songCache = null;
-});
-
-actions.albumArtAction.onWillDisappear(() => {
-    if (!window.contexts.ciderPlaybackAction[0]) {
-        console.debug(`[DEBUG] [Action] ciderPlaybackAction action disappeared.`);
-        clearMarquee();
-        window.artworkCache = null;
-        window.songCache = null;
-    }
-});
-    
-
-// Action Initialization and Context Management
 Object.keys(actions).forEach(actionKey => {
     if (!window.contexts[actionKey]) {
         window.contexts[actionKey] = [];
@@ -114,6 +73,11 @@ Object.keys(actions).forEach(actionKey => {
             window.contexts[actionKey].push(context);
             console.debug(`[DEBUG] [Context] Context added for ${actionKey}: ${context}`);
         }
+        if (currentAppState === AppState.READY) {
+            if (actionKey === 'ciderPlaybackAction' || actionKey === 'albumArtAction' && currentAppState === AppState.READY) {
+                initialize();
+            }
+        }
     });
 
     action.onWillDisappear(({ context }) => {
@@ -122,9 +86,17 @@ Object.keys(actions).forEach(actionKey => {
             window.contexts[actionKey].splice(index, 1);
             console.debug(`[DEBUG] [Context] Context removed for ${actionKey}: ${context}`);
         }
+
+        if (actionKey === 'ciderPlaybackAction' || actionKey === 'albumArtAction') {
+            if (!window.contexts.ciderPlaybackAction[0] && !window.contexts.albumArtAction[0]) {
+                console.debug(`[DEBUG] [Action] ciderPlaybackAction and albumArtAction disappeared.`);
+                clearMarquee();
+                window.artworkCache = null;
+                window.songCache = null;
+            }
+        }
     });
 
-    // Stream Deck Action Handlers
     action.onKeyDown(() => {
         console.debug(`[DEBUG] [Action] ${actionKey} action triggered.`);
         switch (actionKey) {
@@ -150,120 +122,269 @@ Object.keys(actions).forEach(actionKey => {
                 addToLibrary();
                 break;
             case 'volumeUpAction':
-                setVolume("up");
+                handleVolumeChange(null, null, 'up');
                 break;
             case 'volumeDownAction':
-                setVolume("down");
+                handleVolumeChange(null, null, 'down');
                 break;
             case 'ciderLogoAction':
-				console.warn(`[DEBUG] [Action] User must be high, why you clicking the logo?`);
+                console.warn(`[DEBUG] [Action] User must be high, why you clicking the logo?`);
+                break;
+            case 'ciderPlaybackAction':
+                switch (tapBehavior) {
+                    case 'addToLibrary':
+                        addToLibrary();
+                        break;
+                    case 'favorite':
+                        setRating(1);
+                        break;
+                    default:
+                        addToLibrary();
+                        setRating(1);
+                        break;
+                }
                 break;
             default:
                 console.warn(`[DEBUG] [Action] No handler for ${actionKey}`);
                 break;
         }
     });
+
+    if (actionKey === 'ciderPlaybackAction') {
+        action.onDialDown(() => {
+            console.debug(`[DEBUG] [Action] ciderPlaybackAction dial pressed`);
+            switch (pressBehavior) {
+                case 'togglePlay':
+                    comRPC("POST", "playpause");
+                    break;
+                case 'toggleMute':
+                    handleVolumeChange(null, window.contexts.ciderPlaybackAction[0], 'mute');
+                    break;
+                default:
+                    comRPC("POST", "playpause");
+                    break;
+            }
+        });
+
+        action.onDialRotate((jsonObj) => {
+            handleVolumeChange(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0], null, jsonObj.payload);
+        });
+    }
 });
 
-// Receiving Global Settings
+// ==========================================================================
+//  Settings Management
+// ==========================================================================
+
+const defaultSettings = {
+    iconSettings: { useAdaptiveIcons: true },
+    marqueeSettings: {
+        enabled: true,
+        speed: 200,
+        delay: 2000,
+        length: 15
+    },
+    tapSettings: { tapBehavior: 'addToLibrary' },
+    knobSettings: {
+        volumeStep: 1,
+        pressBehavior: 'togglePlay'
+    },
+    authorization: { rpcKey: null }
+};
+
+function updateSettings(settings) {
+    const mergedSettings = {...defaultSettings, ...settings};
+
+    useAdaptiveIcons = mergedSettings.iconSettings.useAdaptiveIcons;
+    
+    Object.assign(window, {
+        marqueeEnabled: mergedSettings.marqueeSettings.enabled,
+        MARQUEE_SPEED: mergedSettings.marqueeSettings.speed,
+        PAUSE_DURATION: mergedSettings.marqueeSettings.delay,
+        DISPLAY_LENGTH: mergedSettings.marqueeSettings.length,
+        tapBehavior: mergedSettings.tapSettings.tapBehavior,
+        volumeStep: mergedSettings.knobSettings.volumeStep,
+        pressBehavior: mergedSettings.knobSettings.pressBehavior,
+        token: mergedSettings.authorization.rpcKey
+    });
+
+    console.debug(`[DEBUG] [Settings] Updated settings:`, mergedSettings);
+
+    if (currentAppState === AppState.STARTING_UP) {
+        startupProcess();
+    }
+}
+
 $SD.onDidReceiveGlobalSettings(({ payload }) => {
-    console.debug(`[DEBUG] [Settings] Global settings received: ${JSON.stringify(payload.settings)}`);
-    
-    // Set the settings based on the received global settings
-    useAdaptiveIcons = payload.settings.iconSettings?.useAdaptiveIcons || true;
-    
-    if (payload.settings.marqueeSettings) {
-        marqueeEnabled = payload.settings.marqueeSettings.enabled !== false;
-        MARQUEE_SPEED = payload.settings.marqueeSettings.speed || 200;
-        PAUSE_DURATION = payload.settings.marqueeSettings.delay || 2000;
-        DISPLAY_LENGTH = payload.settings.marqueeSettings.length || 15;
-    }
-
-    if (payload.settings.tapSettings) {
-        tapBehavior = payload.settings.tapSettings.tapBehavior || 'addToLibrary';
-    }
-
-    if (payload.settings.knobSettings) {
-        volumeStep = payload.settings.knobSettings.volumeStep || 1;
-        pressBehavior = payload.settings.knobSettings.pressBehavior || 'togglePlay';
-    }
-
-    console.debug(`[DEBUG] [Settings] Adaptive icons: ${useAdaptiveIcons}; Marquee enabled: ${marqueeEnabled}; Speed: ${MARQUEE_SPEED}; Length: ${DISPLAY_LENGTH}; Delay: ${PAUSE_DURATION}`);
-
-    rpcKey = payload.settings.authorization?.rpcKey || null;
-    window.token = rpcKey;
-    
+    console.debug(`[DEBUG] [Settings] Global settings received:`, payload.settings);
+    updateSettings(payload.settings);
     checkAuthKey();
 });
 
-async function checkAuthKey() {
+// ==========================================================================
+//  Authentication and Connection
+// ==========================================================================
+
+const MAX_RETRY_ATTEMPTS = 5;
+const RETRY_DELAY = 5000; // 5 seconds
+let retryAttempts = 0;
+let reconnectTimeout;
+
+async function startupProcess() {
+    currentAppState = AppState.STARTING_UP;
+    console.log("[INFO] [Startup] Beginning startup process...");
+
     if (!window.token) {
         console.log("CiderDeck: Please enter your Cider authorization key in the plugin settings.");
+        alertContexts("No auth key");
+        currentAppState = AppState.ERROR;
         return;
     }
+
+    try {
+        await checkAuthKey();
+        await startWebSocket();
+        await initialize();
+        currentAppState = AppState.READY;
+        console.log("[INFO] [Startup] Startup process completed successfully.");
+    } catch (error) {
+        console.error("[ERROR] [Startup] Startup process failed:", error);
+        currentAppState = AppState.ERROR;
+        handleConnectionFailure();
+    }
+}
+
+async function checkAuthKey() {
     try {
         const data = await comRPC("GET", "active", true);
         if (data.error) {
-            alertContexts();
-            $SD.getGlobalSettings();
-        } else {
-            startWebSocket();
+            throw new Error("Invalid response from Cider");
         }
+        console.debug("[DEBUG] [Auth] Successfully authenticated with Cider");
+        isAuthenticated = true;
     } catch (error) {
-        alertContexts();
+        console.error("[ERROR] [Auth] Failed to authenticate:", error.message);
+        throw error;
+    }
+}
+
+function handleConnectionFailure() {
+    isAuthenticated = false;
+    alertContexts("Connection failed");
+    
+    if (retryAttempts < MAX_RETRY_ATTEMPTS) {
+        retryAttempts++;
+        console.log(`[INFO] [Auth] Retrying connection (Attempt ${retryAttempts}/${MAX_RETRY_ATTEMPTS})...`);
+        reconnectTimeout = setTimeout(startupProcess, RETRY_DELAY);
+    } else {
+        console.error("[ERROR] [Auth] Max retry attempts reached. Please check your settings and Cider application status.");
         $SD.getGlobalSettings();
     }
 }
 
+function startWebSocket() {
+    return new Promise((resolve, reject) => {
+        try {
+            const CiderApp = io('http://localhost:10767', {
+                reconnectionAttempts: MAX_RETRY_ATTEMPTS,
+                reconnectionDelay: RETRY_DELAY,
+                timeout: 10000 // 10 seconds timeout
+            });
+
+            CiderApp.on('connect', () => {
+                console.log("[INFO] [WebSocket] Connected to Cider");
+                resolve();
+            });
+
+            CiderApp.on("API:Playback", handlePlaybackEvent);
+
+            CiderApp.on('disconnect', (reason) => {
+                console.warn("[WARN] [WebSocket] Disconnected from Cider:", reason);
+                isAuthenticated = false;
+                currentAppState = AppState.ERROR;
+                if (reason === 'io server disconnect') {
+                    CiderApp.connect();
+                }
+            });
+
+            CiderApp.on('error', (error) => {
+                console.error("[ERROR] [WebSocket] Connection error:", error);
+                handleConnectionFailure();
+            });
+
+            CiderApp.io.on('reconnect_attempt', (attemptNumber) => {
+                console.log(`[INFO] [WebSocket] Reconnection attempt ${attemptNumber}`);
+            });
+
+             CiderApp.io.on('reconnect_failed', () => {
+                console.error("[ERROR] [WebSocket] Failed to reconnect after all attempts");
+                handleConnectionFailure();
+            });
+        } catch (error) {
+            console.error("[ERROR] [WebSocket] Failed to initialize WebSocket:", error);
+            handleConnectionFailure();
+        }
+    });
+}
+
+function handlePlaybackEvent({ data, type }) {
+    if (!data && data !== 0) {
+        setDefaults();
+        return;
+    }
+    
+    switch (type) {
+        case "playbackStatus.nowPlayingStatusDidChange":
+            setAdaptiveData(data);
+            break;
+        case "playbackStatus.nowPlayingItemDidChange":
+            setManualData(data);
+            break;
+        case "playbackStatus.playbackStateDidChange":
+            if (data) setData(data);
+            break;
+        case "playbackStatus.playbackTimeDidChange":
+            setPlaybackStatus(data.isPlaying);
+            if (window.contexts.ciderPlaybackAction[0]) {
+                setPlaybackTime(data.currentPlaybackTime, data.currentPlaybackDuration);
+            }
+            break;
+        case "playerStatus.volumeDidChange":
+            if (window.contexts.ciderPlaybackAction[0]) {
+                updateVolumeDisplay(window.contexts.ciderPlaybackAction[0], data);
+            }
+            break;
+        default:
+            console.warn("[WARN] [Playback] Unhandled event type:", type);
+    }
+}
+
 async function initialize() {
-    await comRPC("GET", "now-playing").then(data => {
+    if (!isAuthenticated) {
+        throw new Error("Attempted to initialize before authentication.");
+    }
+
+    try {
+        const data = await comRPC("GET", "now-playing");
         if (data.status === "ok") {
             setManualData(data.info);
             setAdaptiveData(data.info);
 
             if(window.contexts.ciderPlaybackAction[0]) {
                 initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0]);
-            };
-        }
-    }).catch(console.error);
-};
-
-async function startWebSocket() {
-    try {
-        const CiderApp = io('http://localhost:10767');
-
-        await initialize();
-
-        CiderApp.on("API:Playback", ({ data, type }) => {
-            if (!data && data !== 0) return setDefaults();
-            switch (type) {
-                case "playbackStatus.nowPlayingStatusDidChange":
-                    setAdaptiveData(data);
-                    break;
-                case "playbackStatus.nowPlayingItemDidChange":
-                    setManualData(data);
-                    break;
-                case "playbackStatus.playbackStateDidChange":
-                    if (data) setData(data);
-                    break;
-                case "playbackStatus.playbackTimeDidChange":
-                    setPlaybackStatus(data.isPlaying);
-                    if(window.contexts.ciderPlaybackAction[0]) { setPlaybackTime(data.currentPlaybackTime, data.currentPlaybackDuration); }
-                    break;
-                case "playerStatus.volumeDidChange":
-                    if(window.contexts.ciderPlaybackAction[0]) { updateVolumeDisplay(window.contexts.ciderPlaybackAction[0], data); }
-                    break;
             }
-        });
-
-        CiderApp.on("close", () => setTimeout(checkAuthKey, 5000));
-        CiderApp.onerror = () => setTimeout(checkAuthKey, 5000);
-
+        } else {
+            throw new Error("Invalid response from now-playing endpoint");
+        }
     } catch (error) {
-        // Retry connection on failure.
-        $SD.getGlobalSettings();
+        console.error("[ERROR] [Init] Failed to initialize:", error.message);
+        throw error;
     }
 }
+
+// ==========================================================================
+//  Playback Control Functions
+// ==========================================================================
 
 async function setDefaults() {
     console.debug("[DEBUG] [Defaults] Setting default state.");
@@ -291,7 +412,6 @@ async function setAdaptiveData({ inLibrary, inFavorites }) {
         console.debug("[DEBUG] [Favorites] Updated favorites status:", inFavorites);
     }
 }
-
 
 async function setData({ state, attributes }) {
     setPlaybackStatus(state);
@@ -361,6 +481,10 @@ async function setPlaybackTime(time, duration) {
     $SD.setFeedback(window.contexts.ciderPlaybackAction[0], feedbackPayload);
 }
 
+// ==========================================================================
+//  Library and Rating Functions
+// ==========================================================================
+
 async function addToLibrary() {
     if (!window.addedToLibrary) {
         await comRPC("POST", "add-to-library", true);
@@ -369,117 +493,6 @@ async function addToLibrary() {
         console.debug("[DEBUG] [Library] Added to library");
     }
 }
-
-let isChangingVolume = false;
-let isMuted = false;
-let previousVolume;
-
-async function setVolume(direction) {
-    if (isChangingVolume) return;
-    if (isMuted) { muteVolume(!isMuted); return};
-    isChangingVolume = true;
-
-    try {
-        const { volume: audioData } = await comRPC("GET", "volume");
-        const roundedVolume = Math.round(audioData * 20) / 20;
-        const newVolume = direction === "up" ? Math.min(roundedVolume + 0.05, 1) : Math.max(roundedVolume - 0.05, 0);
-        await comRPC("POST", "volume", true, { volume: newVolume });
-        console.debug("[DEBUG] [Volume] Volume changed to:", newVolume);
-    } catch (error) {
-        console.error("Error changing volume:", error);
-    } finally {
-        isChangingVolume = false;
-    }
-}
-
-async function muteVolume() {
-    if (isChangingVolume) return;
-    isChangingVolume = true;
-    if (!isMuted) {
-        previousVolume = await comRPC("GET", "volume").then(data => data.volume);
-    }
-    isMuted = !isMuted;
-
-    try {
-        const newVolume = isMuted ? 0 : previousVolume;
-        await comRPC("POST", "volume", true, { volume: newVolume });
-        console.debug("[DEBUG] [Volume] Volume changed to:", newVolume);
-
-        // Update Stream Deck+ display
-        if (window.contexts.ciderPlaybackAction[0]) {
-            const feedbackPayload = {
-                "indicator2": isMuted ? 0 : Math.round(previousVolume * 100),
-                "icon2": "actions/playback/assets/volup"
-            };
-            $SD.setFeedback(window.contexts.ciderPlaybackAction[0], feedbackPayload);
-        }
-    } catch (error) {
-        console.error("Error changing volume:", error);
-    } finally {
-        isChangingVolume = false;
-    }
-}
-
-// Stream Deck + Exclusive Vol Control (Left/Right +1% and set progress bar on dial display)
-async function setPreciseVolume(action, context, payload, volumeStep) {
-    if (isChangingVolume) return;
-    if (isMuted) { muteVolume(!isMuted); return};
-    isChangingVolume = true;
-
-    try {
-        const { volume: currentVolume } = await comRPC("GET", "volume");
-        let newVolume;
-
-        if (payload.ticks !== undefined) {
-            // Dial rotation
-            // multiply 0.01 by volumeStep to adjust sensitivity (1-10)
-            newVolume = Math.max(0, Math.min(1, currentVolume + (payload.ticks * 0.01 * volumeStep)));
-        }
-
-        await comRPC("POST", "volume", true, { volume: newVolume });
-        console.debug("[DEBUG] [Volume] Volume changed to:", newVolume);
-
-        // Update Stream Deck+ display
-        const volumePercentage = Math.round(newVolume * 100);
-        const feedbackPayload = {
-            "indicator2": volumePercentage,
-            "icon2": "actions/playback/assets/volup"
-        };
-        $SD.setFeedback(context, feedbackPayload);
-
-    } catch (error) {
-        console.error("Error changing volume:", error);
-    } finally {
-        isChangingVolume = false;
-    }
-}
-
-async function updateVolumeDisplay(context, volume) {
-    const volumePercentage = Math.round(volume * 100);
-    const feedbackPayload = {
-        "indicator2": volumePercentage,
-        "icon2": "actions/playback/assets/volup"
-    };
-    $SD.setFeedback(context, feedbackPayload);
-}
-
-async function initializeVolumeDisplay(action, context, payload) {
-    try {
-        const { volume: currentVolume } = await comRPC("GET", "volume");
-        const volumePercentage = Math.round(currentVolume * 100);
-
-        const feedbackPayload = {
-            "indicator2": volumePercentage,
-            "icon2": "actions/playback/assets/volup"
-        };
-        $SD.setFeedback(context, feedbackPayload);
-
-        console.debug("[DEBUG] [Volume] Display initialized with volume:", volumePercentage);
-    } catch (error) {
-        console.error("Error initializing volume display:", error);
-    }
-}
-    
 
 async function setRating(ratingValue) {
     if (window.ratingCache !== ratingValue) {
@@ -496,16 +509,99 @@ async function setRating(ratingValue) {
     }
 }
 
-function alertContexts() {
-    Object.keys(window.contexts).forEach(actionKey => {
-        window.contexts[actionKey].forEach(context => {
-            $SD.showAlert(context);
-            console.debug(`[DEBUG] [Alert] Alert shown for context: ${context}`);
-        });
+// ==========================================================================
+//  Volume Control Functions
+// ==========================================================================
+
+let isChangingVolume = false;
+let isMuted = false;
+let previousVolume;
+
+async function handleVolumeChange(action, context, direction, payload) {
+    if (isChangingVolume) return;
+    isChangingVolume = true;
+
+    try {
+        let { volume: currentVolume } = await comRPC("GET", "volume");
+        let currentVolumePercent = Math.round(currentVolume * 100);
+
+        const globalVolumeStep = window.volumeStep;
+
+        let newVolume;
+
+        if (isMuted && direction !== 'mute') {
+            isMuted = false;
+            newVolume = previousVolume;
+        } else if (direction === 'mute') {
+            isMuted = !isMuted;
+            previousVolume = currentVolume;
+            newVolume = isMuted ? 0 : previousVolume;
+        } else if (direction === 'up' || direction === 'down') {
+            newVolume = direction === 'up' 
+                ? Math.min(currentVolume + globalVolumeStep / 100, 1) 
+                : Math.max(currentVolume - globalVolumeStep / 100, 0);
+        } else if (payload && payload.ticks !== undefined) {
+            newVolume = Math.max(0, Math.min(1, currentVolume + (payload.ticks * globalVolumeStep / 100)));
+        }
+
+        if (newVolume !== undefined) {
+            let newVolumePercent = Math.round(newVolume * 100);
+            
+            if (Math.abs(newVolumePercent - currentVolumePercent) < globalVolumeStep / 2) {
+                return;
+            }
+
+            await comRPC("POST", "volume", true, { volume: newVolume });
+            console.debug(`[DEBUG] [Volume] Volume changed from to ${newVolumePercent}%`);
+            updateVolumeDisplay(context, newVolume);
+        }
+    } catch (error) {
+        console.error("Error changing volume:", error);
+    } finally {
+        isChangingVolume = false;
+    }
+}
+
+function updateVolumeDisplay(context, volume) {
+    const volumePercentage = Math.round(volume * 100);
+    const feedbackPayload = {
+        "indicator2": volumePercentage,
+        "icon2": "actions/playback/assets/volup"
+    };
+    $SD.setFeedback(context, feedbackPayload);
+}
+
+async function initializeVolumeDisplay(action, context) {
+    try {
+        const { volume: currentVolume } = await comRPC("GET", "volume");
+        updateVolumeDisplay(context, currentVolume);
+        console.debug("[DEBUG] [Volume] Display initialized with volume:", Math.round(currentVolume * 100));
+    } catch (error) {
+        console.error("Error initializing volume display:", error);
+    }
+}
+
+// ==========================================================================
+//  Utility Functions
+// ==========================================================================
+
+function alertContexts(message) {
+    Object.values(window.contexts).flat().forEach(context => {
+        $SD.showAlert(context);
+        console.debug(`[DEBUG] [Alert] Alert shown for context: ${context}`);
     });
+    if (message) {
+        console.log(`[INFO] [Alert] ${message}`);
+    }
 }
 
 async function comRPC(method, request, noCheck, _body) {
+    // Check and make sure token is set before attempting to make a request.
+    if (!window.token) {
+        console.log("CiderDeck: Please enter your Cider authorization key in the plugin settings.");
+        return;
+    }
+
     const fetchOptions = {
         method,
         headers: {
@@ -529,6 +625,26 @@ function setImage(action, image, context) {
 function setTitle(action, title, context) {
    if (action && title && context !== null) $SD.setTitle(action, title, context);
 }
+
+function getBase64Image(url) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            canvas.getContext('2d').drawImage(image, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        image.onerror = () => reject(new Error('Failed to load image'));
+        image.src = url;
+    });
+}
+
+// ==========================================================================
+//  Marquee Functions
+// ==========================================================================
 
 function clearMarquee() {
   if (marqueeInterval) {
@@ -579,7 +695,7 @@ function updateMarqueeDisplay(context) {
       return;
   }
   
-  let visibleText = currentMarqueeText.substr(marqueePosition, DISPLAY_LENGTH);
+  let visibleText = currentMarqueeText.substring(marqueePosition, marqueePosition + DISPLAY_LENGTH);
   
   // Pad with spaces if we're near the end to avoid text wrapping
   if (visibleText.length < DISPLAY_LENGTH) {
@@ -587,20 +703,4 @@ function updateMarqueeDisplay(context) {
   }
   
   $SD.setFeedback(context, { "title": visibleText });
-}
-
-function getBase64Image(url) {
-    return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.crossOrigin = 'anonymous';
-        image.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = image.naturalWidth;
-            canvas.height = image.naturalHeight;
-            canvas.getContext('2d').drawImage(image, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-        };
-        image.onerror = () => reject(new Error('Failed to load image'));
-        image.src = url;
-    });
 }
