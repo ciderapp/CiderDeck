@@ -130,20 +130,6 @@ Object.keys(actions).forEach(actionKey => {
             case 'ciderLogoAction':
                 console.warn(`[DEBUG] [Action] User must be high, why you clicking the logo?`);
                 break;
-            case 'ciderPlaybackAction':
-                switch (tapBehavior) {
-                    case 'addToLibrary':
-                        addToLibrary();
-                        break;
-                    case 'favorite':
-                        setRating(1);
-                        break;
-                    default:
-                        addToLibrary();
-                        setRating(1);
-                        break;
-                }
-                break;
             default:
                 console.warn(`[DEBUG] [Action] No handler for ${actionKey}`);
                 break;
@@ -153,7 +139,7 @@ Object.keys(actions).forEach(actionKey => {
     if (actionKey === 'ciderPlaybackAction') {
         action.onDialDown(() => {
             console.debug(`[DEBUG] [Action] ciderPlaybackAction dial pressed`);
-            switch (pressBehavior) {
+            switch (window.pressBehavior) {
                 case 'togglePlay':
                     comRPC("POST", "playpause");
                     break;
@@ -168,6 +154,22 @@ Object.keys(actions).forEach(actionKey => {
 
         action.onDialRotate((jsonObj) => {
             handleVolumeChange(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0], null, jsonObj.payload);
+        });
+
+        action.onTouchTap(() => {
+            console.debug(`[DEBUG] [Action] ciderPlaybackAction touch tapped`);
+            switch (window.tapBehavior) {
+                case 'addToLibrary':
+                    addToLibrary();
+                    break;
+                case 'favorite':
+                    setRating(1);
+                    break;
+                case 'both':
+                    addToLibrary();
+                    setRating(1);
+                    break;
+            }
         });
     }
 });
