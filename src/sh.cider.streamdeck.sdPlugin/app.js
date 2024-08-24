@@ -68,6 +68,38 @@ actions.ciderPlaybackAction.onDialDown(() => {
 actions.ciderPlaybackAction.onDialRotate((jsonObj) => {
     setPreciseVolume(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0], jsonObj.payload, volumeStep);
 });
+
+// Populate the initial state of the plugin on page shift.
+
+actions.ciderPlaybackAction.onWillAppear(({ context }) => {
+    if (window.contexts.ciderPlaybackAction[0] === context) {
+        initialize();
+    }
+});
+
+actions.albumArtAction.onWillAppear(({ context }) => {
+    if (!window.contexts.ciderPlaybackAction[0]) {
+        initialize();
+    }
+});
+
+// Handle disappearing contexts
+
+actions.ciderPlaybackAction.onWillDisappear(() => {
+    console.debug(`[DEBUG] [Action] ciderPlaybackAction action disappeared.`);
+    clearMarquee();
+    window.artworkCache = null;
+    window.songCache = null;
+});
+
+actions.albumArtAction.onWillDisappear(() => {
+    if (!window.contexts.ciderPlaybackAction[0]) {
+        console.debug(`[DEBUG] [Action] ciderPlaybackAction action disappeared.`);
+        clearMarquee();
+        window.artworkCache = null;
+        window.songCache = null;
+    }
+});
     
 
 // Action Initialization and Context Management
@@ -183,20 +215,24 @@ async function checkAuthKey() {
     }
 }
 
+async function initialize() {
+    await comRPC("GET", "now-playing").then(data => {
+        if (data.status === "ok") {
+            setManualData(data.info);
+            setAdaptiveData(data.info);
+
+            if(window.contexts.ciderPlaybackAction[0]) {
+                initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0]);
+            };
+        }
+    }).catch(console.error);
+};
+
 async function startWebSocket() {
     try {
         const CiderApp = io('http://localhost:10767');
 
-        await comRPC("GET", "now-playing").then(data => {
-            if (data.status === "ok") {
-                setManualData(data.info);
-                setAdaptiveData(data.info);
-
-                if(window.contexts.ciderPlaybackAction[0]) {
-                    initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0]);
-                };
-            }
-        }).catch(console.error);
+        await initialize();
 
         CiderApp.on("API:Playback", ({ data, type }) => {
             if (!data && data !== 0) return setDefaults();
@@ -213,6 +249,9 @@ async function startWebSocket() {
                 case "playbackStatus.playbackTimeDidChange":
                     setPlaybackStatus(data.isPlaying);
                     if(window.contexts.ciderPlaybackAction[0]) { setPlaybackTime(data.currentPlaybackTime, data.currentPlaybackDuration); }
+                    break;
+                case "playerStatus.volumeDidChange":
+                    if(window.contexts.ciderPlaybackAction[0]) { updateVolumeDisplay(window.contexts.ciderPlaybackAction[0], data); }
                     break;
             }
         });
@@ -300,6 +339,7 @@ async function setData({ state, attributes }) {
 }
 
 async function setManualData(playbackInfo) {
+    console.log(playbackInfo)
     setData({ state: playbackInfo.state, attributes: playbackInfo });
 }
 
@@ -370,6 +410,7 @@ async function muteVolume() {
         if (window.contexts.ciderPlaybackAction[0]) {
             const feedbackPayload = {
                 "indicator2": isMuted ? 0 : Math.round(previousVolume * 100),
+                "icon2": "actions/playback/assets/volup"
             };
             $SD.setFeedback(window.contexts.ciderPlaybackAction[0], feedbackPayload);
         }
@@ -402,7 +443,8 @@ async function setPreciseVolume(action, context, payload, volumeStep) {
         // Update Stream Deck+ display
         const volumePercentage = Math.round(newVolume * 100);
         const feedbackPayload = {
-            "indicator2": volumePercentage
+            "indicator2": volumePercentage,
+            "icon2": "actions/playback/assets/volup"
         };
         $SD.setFeedback(context, feedbackPayload);
 
@@ -411,6 +453,15 @@ async function setPreciseVolume(action, context, payload, volumeStep) {
     } finally {
         isChangingVolume = false;
     }
+}
+
+async function updateVolumeDisplay(context, volume) {
+    const volumePercentage = Math.round(volume * 100);
+    const feedbackPayload = {
+        "indicator2": volumePercentage,
+        "icon2": "actions/playback/assets/volup"
+    };
+    $SD.setFeedback(context, feedbackPayload);
 }
 
 async function initializeVolumeDisplay(action, context, payload) {
