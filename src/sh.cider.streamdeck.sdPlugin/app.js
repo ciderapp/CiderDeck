@@ -13,6 +13,7 @@
 //  Global State
 // ==========================================================================
 
+// Startup states for the application
 const AppState = {
     STARTING_UP: 'starting_up',
     READY: 'ready',
@@ -21,17 +22,6 @@ const AppState = {
 
 let currentAppState = AppState.STARTING_UP;
 let isAuthenticated = false;
-
-// ==========================================================================
-//  Initialization and Setup
-// ==========================================================================
-
-$SD.onConnected(() => {
-    console.debug('[DEBUG] [System] Stream Deck connected!');
-    currentAppState = AppState.STARTING_UP;
-    setDefaults();
-    $SD.getGlobalSettings();
-});
 
 // Initialize actions and contexts
 const actions = {
@@ -49,7 +39,23 @@ const actions = {
     ciderPlaybackAction: new Action('sh.cider.streamdeck.playback')
 };
 
-// Global variables
+// Offline states for actions
+const offlineStates = {
+    'sh.cider.streamdeck.playback': 1,
+    'sh.cider.streamdeck.songname': 0,
+    'sh.cider.streamdeck.albumart': 1,
+    'sh.cider.streamdeck.toggle': 2,
+    'sh.cider.streamdeck.volumeup': 1,
+    'sh.cider.streamdeck.volumedown': 1,
+    'sh.cider.streamdeck.addtolibrary': 2,
+    'sh.cider.streamdeck.dislike': 2,
+    'sh.cider.streamdeck.like': 2,
+    'sh.cider.streamdeck.skip': 1,
+    'sh.cider.streamdeck.previous': 1,
+    'sh.cider.streamdeck.ciderlogo': 1
+};
+
+// Global Configuration
 let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
 let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15; lastMarqueeUpdateTime = 0;
 let marqueeEnabled = true, tapBehavior = 'addToLibrary', volumeStep = 1, pressBehavior = 'togglePlay';
@@ -57,6 +63,17 @@ let useAdaptiveIcons = false, rpcKey = null;
 
 // Ensure window.contexts is initialized
 window.contexts = window.contexts || {};
+
+// ==========================================================================
+//  Initialization and Setup
+// ==========================================================================
+
+$SD.onConnected(() => {
+    console.debug('[DEBUG] [System] Stream Deck connected!');
+    currentAppState = AppState.STARTING_UP;
+    setDefaults();
+    $SD.getGlobalSettings();
+});
 
 // ==========================================================================
 //  Context Management
@@ -104,7 +121,7 @@ Object.keys(actions).forEach(actionKey => {
                 comRPC("POST", "playpause");
                 setTimeout(() => {
                     comRPC("GET", "now-playing").then(data => setData(data));
-                }, 500);
+                }, 1000);
                 break;
             case 'skipAction':
                 comRPC("POST", "next");
@@ -229,8 +246,27 @@ $SD.onDidReceiveGlobalSettings(({ payload }) => {
 
 const MAX_RETRY_ATTEMPTS = 5;
 const RETRY_DELAY = 5000; // 5 seconds
+const SERVER_CHECK_INTERVAL = 10000; // 10 seconds
 let retryAttempts = 0;
 let reconnectTimeout;
+let serverCheckInterval;
+
+
+async function checkServerStatus() {
+    try {
+        const response = await fetch('http://localhost:10767/api/v1/playback/active', {
+            headers: {
+                'Content-Type': 'application/json',
+                'apptoken': window.token
+            }
+        });
+        const data = await response.json();
+        return data.status === "ok";
+    } catch (error) {
+        console.debug("[DEBUG] [Server Check] Server not responding:", error.message);
+        return false;
+    }
+}
 
 async function startupProcess() {
     currentAppState = AppState.STARTING_UP;
@@ -238,19 +274,25 @@ async function startupProcess() {
 
     if (!window.token) {
         console.log("CiderDeck: Please enter your Cider authorization key in the plugin settings.");
-        alertContexts("No auth key");
         currentAppState = AppState.ERROR;
         return;
     }
 
     try {
+        const isServerAlive = await checkServerStatus();
+        if (!isServerAlive) {
+            console.log("[INFO] [Startup] Cider server is not responding. Waiting for it to come online...");
+            handleConnectionFailure();
+            return;
+        }
+
         await checkAuthKey();
         await startWebSocket();
         await initialize();
         currentAppState = AppState.READY;
         console.log("[INFO] [Startup] Startup process completed successfully.");
     } catch (error) {
-        console.error("[ERROR] [Startup] Startup process failed:", error);
+        console.info("[ERROR] [Startup] Startup process failed:", error);
         currentAppState = AppState.ERROR;
         handleConnectionFailure();
     }
@@ -265,22 +307,27 @@ async function checkAuthKey() {
         console.debug("[DEBUG] [Auth] Successfully authenticated with Cider");
         isAuthenticated = true;
     } catch (error) {
-        console.error("[ERROR] [Auth] Failed to authenticate:", error.message);
-        throw error;
+        console.info("[ERROR] [Auth] Failed to authenticate:", error.message);
     }
 }
 
 function handleConnectionFailure() {
     isAuthenticated = false;
-    alertContexts("Connection failed");
+    setOfflineStates();
     
-    if (retryAttempts < MAX_RETRY_ATTEMPTS) {
-        retryAttempts++;
-        console.log(`[INFO] [Auth] Retrying connection (Attempt ${retryAttempts}/${MAX_RETRY_ATTEMPTS})...`);
-        reconnectTimeout = setTimeout(startupProcess, RETRY_DELAY);
-    } else {
-        console.error("[ERROR] [Auth] Max retry attempts reached. Please check your settings and Cider application status.");
-        $SD.getGlobalSettings();
+    if (!serverCheckInterval) {
+        serverCheckInterval = setInterval(async () => {
+            const isServerAlive = await checkServerStatus();
+            if (isServerAlive) {
+                console.log("[INFO] [Connection] Server is back online. Attempting to reconnect...");
+                clearInterval(serverCheckInterval);
+                serverCheckInterval = null;
+                retryAttempts = 0;
+                startupProcess();
+            } else {
+                console.debug("[DEBUG] [Connection] Server still offline. Continuing to monitor...");
+            }
+        }, SERVER_CHECK_INTERVAL);
     }
 }
 
@@ -288,13 +335,18 @@ function startWebSocket() {
     return new Promise((resolve, reject) => {
         try {
             const CiderApp = io('http://localhost:10767', {
-                reconnectionAttempts: MAX_RETRY_ATTEMPTS,
+                reconnectionAttempts: Infinity,
                 reconnectionDelay: RETRY_DELAY,
                 timeout: 10000 // 10 seconds timeout
             });
 
             CiderApp.on('connect', () => {
                 console.log("[INFO] [WebSocket] Connected to Cider");
+                if (serverCheckInterval) {
+                    clearInterval(serverCheckInterval);
+                    serverCheckInterval = null;
+                }
+                retryAttempts = 0;
                 resolve();
             });
 
@@ -302,15 +354,11 @@ function startWebSocket() {
 
             CiderApp.on('disconnect', (reason) => {
                 console.warn("[WARN] [WebSocket] Disconnected from Cider:", reason);
-                isAuthenticated = false;
-                currentAppState = AppState.ERROR;
-                if (reason === 'io server disconnect') {
-                    CiderApp.connect();
-                }
+                handleConnectionFailure();
             });
 
             CiderApp.on('error', (error) => {
-                console.error("[ERROR] [WebSocket] Connection error:", error);
+                console.info("[ERROR] [WebSocket] Connection error:", error);
                 handleConnectionFailure();
             });
 
@@ -318,12 +366,12 @@ function startWebSocket() {
                 console.log(`[INFO] [WebSocket] Reconnection attempt ${attemptNumber}`);
             });
 
-             CiderApp.io.on('reconnect_failed', () => {
-                console.error("[ERROR] [WebSocket] Failed to reconnect after all attempts");
+            CiderApp.io.on('reconnect_failed', () => {
+                console.info("[ERROR] [WebSocket] Failed to reconnect after all attempts");
                 handleConnectionFailure();
             });
         } catch (error) {
-            console.error("[ERROR] [WebSocket] Failed to initialize WebSocket:", error);
+            console.info("[ERROR] [WebSocket] Failed to initialize WebSocket:", error);
             handleConnectionFailure();
         }
     });
@@ -369,6 +417,7 @@ async function initialize() {
     try {
         const data = await comRPC("GET", "now-playing");
         if (data.status === "ok") {
+            resetStates(); // Reset states to normal
             setManualData(data.info);
             setAdaptiveData(data.info);
 
@@ -379,8 +428,7 @@ async function initialize() {
             throw new Error("Invalid response from now-playing endpoint");
         }
     } catch (error) {
-        console.error("[ERROR] [Init] Failed to initialize:", error.message);
-        throw error;
+        console.info("[ERROR] [Init] Failed to initialize:", error.message);
     }
 }
 
@@ -399,17 +447,22 @@ async function setDefaults() {
 }
 
 async function setAdaptiveData({ inLibrary, inFavorites }) {
+    console.debug("[DEBUG] [Library] inLibrary:", inLibrary, "inFavorites:", inFavorites);
     if (window.addedToLibrary !== inLibrary) {
-        const libraryIcon = useAdaptiveIcons ? (inLibrary ? 'check_adaptive.png' : 'add_adaptive.png') : (inLibrary ? 'check.png' : 'add.png');
-        window.contexts.addToLibraryAction?.forEach(context => setImage(context, `actions/playback/assets/${libraryIcon}`, 0));
+        window.contexts.addToLibraryAction?.forEach(context => {
+            $SD.setState(context, inLibrary ? 1 : 0);
+        });
         window.addedToLibrary = inLibrary;
         console.debug("[DEBUG] [Library] Updated library status:", inLibrary);
     }
 
     if (window.ratingCache !== inFavorites) {
-        const likeIcon = useAdaptiveIcons ? (inFavorites ? 'liked_adaptive.png' : 'like_adaptive.png') : (inFavorites ? 'liked.png' : 'like.png');
-        window.contexts.likeAction?.forEach(context => setImage(context, `actions/playback/assets/${likeIcon}`, 0));
-        window.contexts.dislikeAction?.forEach(context => setImage(context, useAdaptiveIcons ? 'dislike_adaptive.png' : 'dislike.png', 0));
+        window.contexts.likeAction?.forEach(context => {
+            $SD.setState(context, inFavorites ? 1 : 0);
+        });
+        window.contexts.dislikeAction?.forEach(context => {
+            $SD.setState(context, 0); // Always set to default state for dislike
+        });
         window.ratingCache = inFavorites ? 1 : 0;
         console.debug("[DEBUG] [Favorites] Updated favorites status:", inFavorites);
     }
@@ -451,7 +504,7 @@ async function setData({ state, attributes }) {
     }
 
     const toggleIcon = useAdaptiveIcons
-        ? state === "playing" ? 'pause_adaptive.png' : 'play_adaptive.png'
+        ? state === "playing" ? 'play.png' : 'play.png'
         : state === "playing" ? 'pause.png' : 'play.png';
 
     window.contexts.toggleAction?.forEach(context => setImage(context, `actions/playback/assets/${toggleIcon}`, 0));
@@ -467,8 +520,9 @@ async function setManualData(playbackInfo) {
 async function setPlaybackStatus(status) {
     if (window.statusCache !== status) {
         window.statusCache = status;
-        const toggleIcon = status ? 'pause.png' : 'play.png';
-        window.contexts.toggleAction?.forEach(context => setImage(context, `actions/playback/assets/${toggleIcon}`, 0));
+        window.contexts.toggleAction?.forEach(context => {
+            $SD.setState(context, status ? 1 : 0);
+        });
         console.debug("[DEBUG] [Playback] Updated playback status:", status ? "playing" : "paused");
     }
 }
@@ -490,7 +544,9 @@ async function setPlaybackTime(time, duration) {
 async function addToLibrary() {
     if (!window.addedToLibrary) {
         await comRPC("POST", "add-to-library", true);
-        window.contexts.addToLibraryAction?.forEach(context => setImage(context, 'actions/playback/assets/check.png', 0));
+        window.contexts.addToLibraryAction?.forEach(context => {
+            $SD.setState(context, 1);
+        });
         window.addedToLibrary = true;
         console.debug("[DEBUG] [Library] Added to library");
     }
@@ -500,11 +556,12 @@ async function setRating(ratingValue) {
     if (window.ratingCache !== ratingValue) {
         await comRPC("POST", "set-rating", true, { rating: ratingValue });
 
-        const likeIcon = ratingValue === 1 ? 'liked.png' : 'like.png';
-        const dislikeIcon = ratingValue === -1 ? 'disliked.png' : 'dislike.png';
-
-        window.contexts.likeAction?.forEach(context => setImage(context, `actions/playback/assets/${likeIcon}`, 0));
-        window.contexts.dislikeAction?.forEach(context => setImage(context, `actions/playback/assets/${dislikeIcon}`, 0));
+        window.contexts.likeAction?.forEach(context => {
+            $SD.setState(context, ratingValue === 1 ? 1 : 0);
+        });
+        window.contexts.dislikeAction?.forEach(context => {
+            $SD.setState(context, ratingValue === -1 ? 1 : 0);
+        });
 
         window.ratingCache = ratingValue;
         console.debug("[DEBUG] [Rating] Updated rating to:", ratingValue);
@@ -558,7 +615,7 @@ async function handleVolumeChange(action, context, direction, payload) {
             updateVolumeDisplay(context, newVolume);
         }
     } catch (error) {
-        console.error("Error changing volume:", error);
+        console.info("Error changing volume:", error);
     } finally {
         isChangingVolume = false;
     }
@@ -579,7 +636,7 @@ async function initializeVolumeDisplay(action, context) {
         updateVolumeDisplay(context, currentVolume);
         console.debug("[DEBUG] [Volume] Display initialized with volume:", Math.round(currentVolume * 100));
     } catch (error) {
-        console.error("Error initializing volume display:", error);
+        console.info("Error initializing volume display:", error);
     }
 }
 
@@ -587,14 +644,28 @@ async function initializeVolumeDisplay(action, context) {
 //  Utility Functions
 // ==========================================================================
 
-function alertContexts(message) {
-    Object.values(window.contexts).flat().forEach(context => {
-        $SD.showAlert(context);
-        console.debug(`[DEBUG] [Alert] Alert shown for context: ${context}`);
+function setOfflineStates() {
+    Object.keys(actions).forEach(actionKey => {
+        const contexts = window.contexts[actionKey] || [];
+        const uuid = actions[actionKey].UUID;
+        const offlineState = offlineStates[uuid];
+        if (offlineState !== undefined) {
+            contexts.forEach(context => {
+                $SD.setState(context, offlineState);
+                console.debug(`[DEBUG] [Offline] Set ${actionKey} to offline state: ${offlineState}`);
+            });
+        }
     });
-    if (message) {
-        console.log(`[INFO] [Alert] ${message}`);
-    }
+}
+
+function resetStates() {
+    Object.keys(actions).forEach(actionKey => {
+        const contexts = window.contexts[actionKey] || [];
+        contexts.forEach(context => {
+            $SD.setState(context, 0); // Reset to default state
+            console.debug(`[DEBUG] [Online] Reset ${actionKey} to default state`);
+        });
+    });
 }
 
 async function comRPC(method, request, noCheck, _body) {
@@ -616,7 +687,7 @@ async function comRPC(method, request, noCheck, _body) {
         const response = await fetch(`http://localhost:10767/api/v1/playback/${request}`, fetchOptions);
         return await response.json();
     } catch (error) {
-        if (!noCheck) console.error("Request error:", error);
+        if (!noCheck) console.info("Request error:", error);
     }
 }
 

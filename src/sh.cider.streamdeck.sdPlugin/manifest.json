@@ -41,6 +41,9 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/icon"
+				},
+				{
+					"Image": "actions/playback/assets/icon_disabled"
 				}
 			],
 			"SupportedInMultiActions": false,
@@ -80,6 +83,9 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/icon"
+				},
+				{
+					"Image": "actions/playback/assets/icon_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to show the currently playing song's Album Art from Cider.",
@@ -99,6 +105,12 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/play"
+				},
+				{
+					"Image": "actions/playback/assets/pause"
+				},
+				{
+					"Image": "actions/playback/assets/play_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to toggle the currently playing song in Cider.",
@@ -118,6 +130,9 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/volup"
+				},
+				{
+					"Image": "actions/playback/assets/volup_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to raise the volume in Cider.",
@@ -137,6 +152,9 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/voldown"
+				},
+				{
+					"Image": "actions/playback/assets/voldown_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to lower the volume in Cider.",
@@ -156,6 +174,12 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/add"
+				},
+				{
+					"Image": "actions/playback/assets/check"
+				},
+				{
+					"Image": "actions/playback/assets/add_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to add/remove the currently playing song from your library in Cider.",
@@ -175,6 +199,12 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/dislike"
+				},
+				{
+					"Image": "actions/playback/assets/disliked"
+				},
+				{
+					"Image": "actions/playback/assets/dislike_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to dislike the currently playing song in Cider.",
@@ -194,6 +224,12 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/like"
+				},
+				{
+					"Image": "actions/playback/assets/liked"
+				},
+				{
+					"Image": "actions/playback/assets/like_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to like the currently playing song in Cider.",
@@ -213,6 +249,9 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/next"
+				},
+				{
+					"Image": "actions/playback/assets/next_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to skip the currently playing song in Cider.",
@@ -232,6 +271,9 @@
 			"States": [
 				{
 					"Image": "actions/playback/assets/previous"
+				},
+				{
+					"Image": "actions/playback/assets/previous_disabled"
 				}
 			],
 			"Tooltip": "Provides a tile to play the previous song in Cider.",
@@ -249,6 +291,9 @@
 				}
 			},
 			"States": [
+				{
+					"Image": "actions/playback/assets/icon"
+				},
 				{
 					"Image": "actions/playback/assets/icon"
 				}
