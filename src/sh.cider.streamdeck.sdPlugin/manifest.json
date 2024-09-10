@@ -29,7 +29,7 @@
 			"Controllers": ["Encoder"],
 			"DisableAutomaticStates": true,
 			"Encoder": {
-				"Icon": "actions/assets/app/media-playlist",
+				"Icon": "actions/assets/app/icon",
 				"layout": "$C1",
 				"TriggerDescription": {
 					"Push": "Mute/unmute the volume in Cider.",
@@ -46,7 +46,6 @@
 					"Image": "actions/assets/buttons/offline/media-playlist"
 				}
 			],
-			"SupportedInMultiActions": true,
 			"Tooltip": "Provides various controls for managing your media through Cider.",
 			"UUID": "sh.cider.streamdeck.playback",
 			"PropertyInspectorPath": "actions/inspectors/inspector.html"

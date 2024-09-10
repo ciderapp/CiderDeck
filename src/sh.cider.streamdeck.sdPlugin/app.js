@@ -749,7 +749,9 @@ function updateVolumeDisplay(context, volume) {
     const volumePercentage = Math.round(volume * 100);
     const feedbackPayload = {
         "indicator2": volumePercentage,
-        "icon2": "actions/playback/assets/volup"
+        "icon2": volumePercentage === 0 ? "actions/assets/buttons/volume-off"
+                 : volumePercentage <= 50 ? "actions/assets/buttons/volume-down-1"
+                 : "actions/assets/buttons/volume-up-1"
     };
     $SD.setFeedback(context, feedbackPayload);
 }
