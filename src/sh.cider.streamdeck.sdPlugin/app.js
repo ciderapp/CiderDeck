@@ -357,6 +357,7 @@ function startWebSocket() {
 
             CiderApp.on('connect', () => {
                 console.log("[INFO] [WebSocket] Connected to Cider");
+                setDefaults()
                 if (serverCheckInterval) {
                     clearInterval(serverCheckInterval);
                     serverCheckInterval = null;
