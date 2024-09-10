@@ -26,6 +26,8 @@ let isAuthenticated = false;
 // Initialize actions and contexts
 const actions = {
     toggleAction: new Action('sh.cider.streamdeck.toggle'),
+    repeatAction: new Action('sh.cider.streamdeck.repeat'),
+    shuffleAction: new Action('sh.cider.streamdeck.shuffle'),
     skipAction: new Action('sh.cider.streamdeck.skip'),
     previousAction: new Action('sh.cider.streamdeck.previous'),
     songNameAction: new Action('sh.cider.streamdeck.songname'),
@@ -45,6 +47,8 @@ const offlineStates = {
     'sh.cider.streamdeck.songname': 0,
     'sh.cider.streamdeck.albumart': 1,
     'sh.cider.streamdeck.toggle': 2,
+    'sh.cider.streamdeck.repeat': 3,
+    'sh.cider.streamdeck.shuffle': 2,
     'sh.cider.streamdeck.volumeup': 1,
     'sh.cider.streamdeck.volumedown': 1,
     'sh.cider.streamdeck.addtolibrary': 2,
@@ -59,6 +63,8 @@ const offlineStates = {
 let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
 let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15; lastMarqueeUpdateTime = 0;
 let marqueeEnabled = true, tapBehavior = 'addToLibrary', volumeStep = 1, pressBehavior = 'togglePlay';
+let currentRepeatMode = 0; // 0: off, 1: repeat one, 2: repeat all, 3: disabled
+let currentShuffleMode = 0; // 0: off, 1: on, 2: disabled
 let useAdaptiveIcons = false, rpcKey = null;
 
 // Ensure window.contexts is initialized
@@ -123,6 +129,12 @@ Object.keys(actions).forEach(actionKey => {
                     comRPC("GET", "now-playing").then(data => setData(data));
                 }, 1000);
                 break;
+            case 'repeatAction':
+                comRPC("POST", "toggle-repeat");
+                break;
+            case 'shuffleAction':
+                comRPC("POST", "toggle-shuffle");
+                break;
             case 'skipAction':
                 comRPC("POST", "next");
                 break;
@@ -145,7 +157,7 @@ Object.keys(actions).forEach(actionKey => {
                 handleVolumeChange(null, null, 'down');
                 break;
             case 'ciderLogoAction':
-                console.warn(`[DEBUG] [Action] User must be high, why you clicking the logo?`);
+                console.warn(`[DEBUG] [Action] Interesting decision?`);
                 break;
             default:
                 console.warn(`[DEBUG] [Action] No handler for ${actionKey}`);
@@ -159,6 +171,9 @@ Object.keys(actions).forEach(actionKey => {
             switch (window.pressBehavior) {
                 case 'togglePlay':
                     comRPC("POST", "playpause");
+                    setTimeout(() => {
+                        comRPC("GET", "now-playing").then(data => setData(data));
+                    }, 1000);
                     break;
                 case 'toggleMute':
                     handleVolumeChange(null, window.contexts.ciderPlaybackAction[0], 'mute');
@@ -254,7 +269,7 @@ let serverCheckInterval;
 
 async function checkServerStatus() {
     try {
-        const response = await fetch('http://localhost:10767/api/v1/playback/active', {
+        const response = await fetch('http://127.0.0.1:10767/api/v1/playback/active', {
             headers: {
                 'Content-Type': 'application/json',
                 'apptoken': window.token
@@ -334,7 +349,7 @@ function handleConnectionFailure() {
 function startWebSocket() {
     return new Promise((resolve, reject) => {
         try {
-            const CiderApp = io('http://localhost:10767', {
+            const CiderApp = io('http://127.0.0.1:10767', {
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: RETRY_DELAY,
                 timeout: 10000 // 10 seconds timeout
@@ -389,6 +404,7 @@ function handlePlaybackEvent({ data, type }) {
             break;
         case "playbackStatus.nowPlayingItemDidChange":
             setManualData(data);
+            updatePlaybackModes();
             break;
         case "playbackStatus.playbackStateDidChange":
             if (data) setData(data);
@@ -403,6 +419,12 @@ function handlePlaybackEvent({ data, type }) {
             if (window.contexts.ciderPlaybackAction[0]) {
                 updateVolumeDisplay(window.contexts.ciderPlaybackAction[0], data);
             }
+            break;
+        case "playerStatus.repeatModeDidChange":
+            updateRepeatMode(data);
+            break;
+        case "playerStatus.shuffleModeDidChange":
+            updateShuffleMode(data);
             break;
         default:
             console.warn("[WARN] [Playback] Unhandled event type:", type);
@@ -420,6 +442,7 @@ async function initialize() {
             resetStates(); // Reset states to normal
             setManualData(data.info);
             setAdaptiveData(data.info);
+            await updatePlaybackModes();
 
             if(window.contexts.ciderPlaybackAction[0]) {
                 initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0]);
@@ -471,7 +494,12 @@ async function setAdaptiveData({ inLibrary, inFavorites }) {
 async function setData({ state, attributes }) {
     setPlaybackStatus(state);
 
-    const artwork = attributes.artwork?.url?.replace('{w}', attributes?.artwork?.width).replace('{h}', attributes?.artwork?.height);
+    let artwork = window.artworkCache
+
+    if (attributes?.artwork) {
+        artwork = attributes.artwork?.url?.replace('{w}', attributes?.artwork?.width).replace('{h}', attributes?.artwork?.height);
+    }
+
     const songName = attributes.name;
     const artistName = attributes.artistName;
     const albumName = attributes.albumName;
@@ -520,10 +548,106 @@ async function setManualData(playbackInfo) {
 async function setPlaybackStatus(status) {
     if (window.statusCache !== status) {
         window.statusCache = status;
+
+        // Check if its a string, if it is reformat to 0/1
+        if (typeof status === 'string') {
+            status = status === 'playing' ? 1 : 0;
+        }
+            
         window.contexts.toggleAction?.forEach(context => {
             $SD.setState(context, status ? 1 : 0);
         });
         console.debug("[DEBUG] [Playback] Updated playback status:", status ? "playing" : "paused");
+    }
+}
+
+function updateRepeatMode(mode) {
+    currentRepeatMode = mode;
+    console.debug(`[DEBUG] [Repeat] Updated repeat mode to: ${currentRepeatMode}`);
+    
+    window.contexts.repeatAction?.forEach(context => {
+        $SD.setState(context, currentRepeatMode);
+    });
+}
+
+function updateShuffleMode(mode) {
+    currentShuffleMode = mode;
+    console.debug(`[DEBUG] [Shuffle] Updated shuffle mode to: ${currentShuffleMode}`);
+    
+    window.contexts.shuffleAction?.forEach(context => {
+        $SD.setState(context, currentShuffleMode);
+    });
+}
+
+async function setRepeatMode() {
+    if (currentRepeatMode === 3) return; // Don't do anything if disabled
+
+    try {
+        // Predict the next mode
+        const predictedMode = (currentRepeatMode + 1) % 3;
+        
+        // Update UI immediately (optimistic update)
+        updateRepeatMode(predictedMode);
+
+        // Send request to server
+        const response = await comRPC("POST", "toggle-repeat", true);
+        
+        if (response && response.status === "ok") {
+            // The Socket.io event will handle the actual update if it differs from our prediction
+            console.debug(`[DEBUG] [Repeat] Toggled repeat mode`);
+        } else {
+            console.warn("[WARN] [Repeat] Failed to toggle repeat mode");
+            // Revert to previous state if the request failed
+            updateRepeatMode(currentRepeatMode);
+        }
+    } catch (error) {
+        console.error("[ERROR] [Repeat] Error toggling repeat mode:", error);
+        // Revert to previous state if there was an error
+        updateRepeatMode(currentRepeatMode);
+    }
+}
+
+async function setShuffleMode() {
+    if (currentShuffleMode === 2) return; // Don't do anything if disabled
+
+    try {
+        // Predict the next mode
+        const predictedMode = currentShuffleMode === 0 ? 1 : 0;
+        
+        // Update UI immediately (optimistic update)
+        updateShuffleMode(predictedMode);
+
+        // Send request to server
+        const response = await comRPC("POST", "toggle-shuffle", true);
+        
+        if (response && response.status === "ok") {
+            // The Socket.io event will handle the actual update if it differs from our prediction
+            console.debug(`[DEBUG] [Shuffle] Toggled shuffle mode`);
+        } else {
+            console.warn("[WARN] [Shuffle] Failed to toggle shuffle mode");
+            // Revert to previous state if the request failed
+            updateShuffleMode(currentShuffleMode);
+        }
+    } catch (error) {
+        console.error("[ERROR] [Shuffle] Error toggling shuffle mode:", error);
+        // Revert to previous state if there was an error
+        updateShuffleMode(currentShuffleMode);
+    }
+}
+
+async function updatePlaybackModes() {
+    try {
+        const repeatMode = await comRPC("GET", "repeat-mode");
+        if (repeatMode && repeatMode.status === "ok" && repeatMode.value !== undefined) {
+            updateRepeatMode(repeatMode.value);
+        }
+        
+        const shuffleMode = await comRPC("GET", "shuffle-mode");
+        if (shuffleMode && shuffleMode.status === "ok" && shuffleMode.value !== undefined) {
+            updateShuffleMode(shuffleMode.value);
+        }
+    } catch (error) {
+        console.error("[ERROR] [Modes] Error updating playback modes:", error);
     }
 }
 
@@ -648,7 +772,16 @@ function setOfflineStates() {
     Object.keys(actions).forEach(actionKey => {
         const contexts = window.contexts[actionKey] || [];
         const uuid = actions[actionKey].UUID;
-        const offlineState = offlineStates[uuid];
+        let offlineState = offlineStates[uuid];
+        
+        if (actionKey === 'repeatAction') {
+            offlineState = 3; // Disabled state for repeat
+            currentRepeatMode = 3;
+        } else if (actionKey === 'shuffleAction') {
+            offlineState = 2; // Disabled state for shuffle
+            currentShuffleMode = 2;
+        }
+        
         if (offlineState !== undefined) {
             contexts.forEach(context => {
                 $SD.setState(context, offlineState);
@@ -662,7 +795,15 @@ function resetStates() {
     Object.keys(actions).forEach(actionKey => {
         const contexts = window.contexts[actionKey] || [];
         contexts.forEach(context => {
-            $SD.setState(context, 0); // Reset to default state
+            if (actionKey === 'repeatAction') {
+                currentRepeatMode = 0;
+                $SD.setState(context, 0);
+            } else if (actionKey === 'shuffleAction') {
+                currentShuffleMode = 0;
+                $SD.setState(context, 0);
+            } else {
+                $SD.setState(context, 0);
+            }
             console.debug(`[DEBUG] [Online] Reset ${actionKey} to default state`);
         });
     });
