@@ -1,3 +1,0 @@
-[submodule "src/sh.cider.streamdeck/libs"]
-	path = src/sh.cider.streamdeck/libs
-	url = https://github.com/ciderapp/CiderDeck
