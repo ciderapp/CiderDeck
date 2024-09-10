@@ -463,8 +463,7 @@ async function setDefaults() {
     console.debug("[DEBUG] [Defaults] Setting default state.");
     Object.keys(actions).forEach(actionKey => {
         window.contexts[actionKey]?.forEach(context => {
-            const img = actionKey === 'toggleAction' ? 'play.png' : `${actionKey.replace('Action', '')}.png`;
-            setImage(context, `actions/playback/assets/${img}`, 0);
+            actionKey.setState(0);
         });
     });
 }

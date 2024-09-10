@@ -239,7 +239,7 @@
 					"Image": "actions/assets/buttons/alt/check"
 				},
 				{
-					"Image": "actions/assets/buttons/offline/add"
+					"Image": "actions/assets/buttons/offline/plus"
 				}
 			],
 			"Tooltip": "Provides a tile to add/remove the currently playing song from your library in Cider.",
