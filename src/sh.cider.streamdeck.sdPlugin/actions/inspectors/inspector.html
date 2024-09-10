@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>CiderDeck Settings</title>
+    <link rel="stylesheet" href="../../libs/css/sdpi.css">
+</head>
+<body>
+    <div class="sdpi-wrapper">
+        <div class="sdpi-heading">CiderDeck Settings</div>
+        <div class="sdpi-description">Setup your experience!</div>
+
+        <form id="property-inspector">
+            <div class="sdpi-item" id="icon-settings" type="group">
+                <div class="sdpi-item-label">Icon Settings</div>
+                <div class="sdpi-item-group">
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">Use adaptive playback icons</div>
+                        <div class="sdpi-item-value">
+                            <input id="use-adaptive-icons" type="checkbox" data-setting="useAdaptiveIcons" class="sdProperty sdCheckbox" checked>
+                            <label for="use-adaptive-icons"><span></span>Will prevent use of custom icons</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item" id="marquee-settings" type="group">
+                <div class="sdpi-item-label">Marquee Settings (SD+)</div>
+                <div class="sdpi-item-group">
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">Enable Marquee</div>
+                        <div class="sdpi-item-value">
+                            <input id="enable-marquee" type="checkbox" data-setting="enableMarquee" class="sdProperty sdCheckbox" checked>
+                            <label for="enable-marquee"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">Speed (ms)</div>
+                        <input id="marquee-speed" type="number" inputmode="numeric" pattern="[0-9]*" data-setting="marqueeSpeed" class="sdProperty sdpi-item-value" value="200" placeholder="200">
+                    </div>
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">Length (Chars)</div>
+                        <input id="marquee-length" type="number" inputmode="numeric" pattern="[0-9]*" data-setting="marqueeLength" class="sdProperty sdpi-item-value" value="15" placeholder="15">
+                    </div>
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">Delay (ms)</div>
+                        <input id="marquee-delay" type="number" inputmode="numeric" pattern="[0-9]*" data-setting="marqueeDelay" class="sdProperty sdpi-item-value" value="2000" placeholder="2000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item" id="touch-settings" type="group">
+                <div class="sdpi-item-label">Touch Settings (SD+)</div>
+                <div class="sdpi-item-group">
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">Tap Behavior</div>
+                        <div class="sdpi-item-value">
+                            <select id="tap-behavior" data-setting="tapBehavior" class="sdpi-item-value select">
+                                <option selected value="addToLibrary">Add to Library</option>
+                                <option value="favorite">Favorite</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item" id="knob-settings" type="group">
+                <div class="sdpi-item-label">Knob Settings (SD+)</div>
+                <div class="sdpi-item-group">
+                    <div type="range" class="sdpi-item" id="range_with_meters">
+                        <div class="sdpi-item-label">Volume Step</div>
+                        <div class="sdpi-item-value">
+                            <span class="clickable" value="0">0</span>
+                            <input type="range" min="0" max="10" value=1 data-setting="volumeStep" id="volumeStep">
+                            <span class="clickable" value="10">10</span>
+                        </div>
+                    </div>
+                    <div class="sdpi-item" id="select_single">
+                        <div class="sdpi-item-label">Press Behavior</div>
+                        <div class="sdpi-item-value">
+                            <select id="knob-press-behavior" data-setting="pressBehavior" class="sdpi-item-value select">
+                                <option value="toggleMute">Toggle Mute</option>
+                                <option selected value="togglePlay">Toggle Playback</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item" id="auth-settings" type="group">
+                <div class="sdpi-item-label">Authorization</div>
+                <div class="sdpi-item-group">
+                    <div class="sdpi-item">
+                        <div class="sdpi-item-label">RPC Key</div>
+                        <input id="authKey" type="password" data-setting="authKey" class="sdProperty sdpi-item-value" placeholder="Enter your RPC Key" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="save-settings" class="sdpi-item-value">Save Settings</button>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="reset-settings" class="sdpi-item-value">Reset Settings</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../../libs/js/constants.js"></script>
+    <script src="../../libs/js/utils.js"></script>
+    <script src="../../libs/js/events.js"></script>
+    <script src="../../libs/js/api.js"></script>
+    <script src="../../libs/js/property-inspector.js"></script>
+    <script src="../../libs/js/dynamic-styles.js"></script>
+    <script src="inspector.js"></script>
+</body>
+</html>
