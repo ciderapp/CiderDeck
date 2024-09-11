@@ -96,11 +96,6 @@ Object.keys(actions).forEach(actionKey => {
             window.contexts[actionKey].push(context);
             console.debug(`[DEBUG] [Context] Context added for ${actionKey}: ${context}`);
         }
-        if (currentAppState === AppState.READY) {
-            if (actionKey === 'ciderPlaybackAction' || actionKey === 'albumArtAction' && currentAppState === AppState.READY) {
-                initialize();
-            }
-        }
     });
 
     action.onWillDisappear(({ context }) => {
@@ -126,7 +121,11 @@ Object.keys(actions).forEach(actionKey => {
             case 'toggleAction':
                 comRPC("POST", "playpause");
                 setTimeout(() => {
-                    comRPC("GET", "now-playing").then(data => setData(data));
+                    comRPC("GET", "now-playing").then(data => {
+                        if (!data.info !== 0 && data.status === "ok") {
+                            setData(data)
+                        }
+                    });
                 }, 1000);
                 break;
             case 'repeatAction':
@@ -259,13 +258,7 @@ $SD.onDidReceiveGlobalSettings(({ payload }) => {
 //  Authentication and Connection
 // ==========================================================================
 
-const MAX_RETRY_ATTEMPTS = 5;
-const RETRY_DELAY = 5000; // 5 seconds
-const SERVER_CHECK_INTERVAL = 10000; // 10 seconds
-let retryAttempts = 0;
-let reconnectTimeout;
-let serverCheckInterval;
-
+let isConnected = false;
 
 async function checkServerStatus() {
     try {
@@ -294,22 +287,12 @@ async function startupProcess() {
     }
 
     try {
-        const isServerAlive = await checkServerStatus();
-        if (!isServerAlive) {
-            console.log("[INFO] [Startup] Cider server is not responding. Waiting for it to come online...");
-            handleConnectionFailure();
-            return;
-        }
-
-        await checkAuthKey();
         await startWebSocket();
-        await initialize();
-        currentAppState = AppState.READY;
-        console.log("[INFO] [Startup] Startup process completed successfully.");
+        // The rest of the initialization will be handled in the 'connect' event
     } catch (error) {
         console.info("[ERROR] [Startup] Startup process failed:", error);
         currentAppState = AppState.ERROR;
-        handleConnectionFailure();
+        handleDisconnection();
     }
 }
 
@@ -336,7 +319,6 @@ function handleConnectionFailure() {
             if (isServerAlive) {
                 console.log("[INFO] [Connection] Server is back online. Attempting to reconnect...");
                 clearInterval(serverCheckInterval);
-                serverCheckInterval = null;
                 retryAttempts = 0;
                 startupProcess();
             } else {
@@ -351,18 +333,21 @@ function startWebSocket() {
         try {
             const CiderApp = io('http://127.0.0.1:10767', {
                 reconnectionAttempts: Infinity,
-                reconnectionDelay: RETRY_DELAY,
+                reconnectionDelay: 1000,
                 timeout: 10000 // 10 seconds timeout
             });
 
             CiderApp.on('connect', () => {
                 console.log("[INFO] [WebSocket] Connected to Cider");
-                setDefaults()
-                if (serverCheckInterval) {
-                    clearInterval(serverCheckInterval);
-                    serverCheckInterval = null;
-                }
-                retryAttempts = 0;
+                isConnected = true;
+                resetStates();
+                initialize().then(() => {
+                    currentAppState = AppState.READY;
+                    console.log("[INFO] [Startup] Startup process completed successfully.");
+                }).catch(error => {
+                    console.info("[ERROR] [Startup] Failed to initialize:", error);
+                    currentAppState = AppState.ERROR;
+                });
                 resolve();
             });
 
@@ -370,12 +355,12 @@ function startWebSocket() {
 
             CiderApp.on('disconnect', (reason) => {
                 console.warn("[WARN] [WebSocket] Disconnected from Cider:", reason);
-                handleConnectionFailure();
+                isConnected = false;
+                handleDisconnection();
             });
 
             CiderApp.on('error', (error) => {
                 console.info("[ERROR] [WebSocket] Connection error:", error);
-                handleConnectionFailure();
             });
 
             CiderApp.io.on('reconnect_attempt', (attemptNumber) => {
@@ -384,13 +369,45 @@ function startWebSocket() {
 
             CiderApp.io.on('reconnect_failed', () => {
                 console.info("[ERROR] [WebSocket] Failed to reconnect after all attempts");
-                handleConnectionFailure();
+                isConnected = false;
+                handleDisconnection();
             });
         } catch (error) {
             console.info("[ERROR] [WebSocket] Failed to initialize WebSocket:", error);
-            handleConnectionFailure();
+            isConnected = false;
+            handleDisconnection();
+            reject(error);
         }
     });
+}
+
+function handleDisconnection() {
+    currentAppState = AppState.ERROR;
+    clearCachedData();
+    setOfflineStates();
+}
+
+function clearCachedData() {
+    // Clear all cached data
+    window.artworkCache = null;
+    window.songCache = null;
+    window.statusCache = null;
+    window.addedToLibrary = null;
+    window.ratingCache = null;
+
+    // Reset playback modes
+    currentRepeatMode = 0;
+    currentShuffleMode = 0;
+
+    // Clear marquee data
+    clearMarquee();
+
+    // Reset volume-related variables
+    isChangingVolume = false;
+    isMuted = false;
+    previousVolume = null;
+
+    console.log("[INFO] [Cache] Cleared all cached data");
 }
 
 function handlePlaybackEvent({ data, type }) {
@@ -408,6 +425,7 @@ function handlePlaybackEvent({ data, type }) {
             updatePlaybackModes();
             break;
         case "playbackStatus.playbackStateDidChange":
+            setPlaybackStatus(data);
             if (data) setData(data);
             break;
         case "playbackStatus.playbackTimeDidChange":
@@ -433,14 +451,14 @@ function handlePlaybackEvent({ data, type }) {
 }
 
 async function initialize() {
-    if (!isAuthenticated) {
-        throw new Error("Attempted to initialize before authentication.");
+    if (!isConnected) {
+        throw new Error("Attempted to initialize before WebSocket connection established.");
     }
 
     try {
         const data = await comRPC("GET", "now-playing");
         if (data.status === "ok") {
-            resetStates(); // Reset states to normal
+            if (data.info === 0) return;
             setManualData(data.info);
             setAdaptiveData(data.info);
             await updatePlaybackModes();
@@ -453,6 +471,7 @@ async function initialize() {
         }
     } catch (error) {
         console.info("[ERROR] [Init] Failed to initialize:", error.message);
+        throw error;
     }
 }
 
@@ -464,7 +483,17 @@ async function setDefaults() {
     console.debug("[DEBUG] [Defaults] Setting default state.");
     Object.keys(actions).forEach(actionKey => {
         window.contexts[actionKey]?.forEach(context => {
-            actionKey.setState(0);
+            if (actionKey === 'ciderPlaybackAction') {
+                const feedbackPayload = {
+                    "icon1": "actions/assets/buttons/media-playlist",
+                    "icon2": "actions/assets/buttons/volume-off",
+                    "title": "Cider - N/A",
+                };
+                $SD.setFeedback(context, feedbackPayload);
+                console.log("[INFO] [Defaults] Set default feedback for Cider Playback Action.");
+            } else {
+                $SD.setState(context, 0);
+            }
         });
     });
 }
@@ -790,6 +819,19 @@ function setOfflineStates() {
                 console.debug(`[DEBUG] [Offline] Set ${actionKey} to offline state: ${offlineState}`);
             });
         }
+
+        if (actionKey === 'ciderPlaybackAction') {
+            const feedbackPayload = {
+                "icon1": "actions/assets/buttons/media-playlist",
+                "icon2": "actions/assets/buttons/volume-off",
+                "indicator1": 0,
+                "indicator2": 0,
+                "title": "Cider - Offline",
+            };
+            contexts.forEach(context => {
+                $SD.setFeedback(context, feedbackPayload);
+            });
+        }
     });
 }
 
@@ -806,15 +848,34 @@ function resetStates() {
             } else {
                 $SD.setState(context, 0);
             }
-            console.debug(`[DEBUG] [Online] Reset ${actionKey} to default state`);
+
+            if (actionKey === 'albumArtAction') {
+                $SD.setImage(context, "actions/assets/buttons/icon", 0);
+            }
+
+            if (actionKey === 'ciderPlaybackAction') {
+                const feedbackPayload = {
+                    "icon1": "actions/assets/buttons/media-playlist",
+                    "icon2": "actions/assets/buttons/volume-off",
+                    "title": "Cider - N/A",
+                };
+                $SD.setFeedback(context, feedbackPayload);
+                console.log("[DEBUG] [Online] Set default feedback for Cider Playback Action.");
+            } else {
+                console.debug(`[DEBUG] [Online] Reset ${actionKey} to default state`);
+            }
         });
     });
 }
 
 async function comRPC(method, request, noCheck, _body) {
-    // Check and make sure token is set before attempting to make a request.
     if (!window.token) {
         console.log("CiderDeck: Please enter your Cider authorization key in the plugin settings.");
+        return;
+    }
+
+    if (!isConnected) {
+        console.warn("[WARN] [comRPC] Attempted to make request while disconnected");
         return;
     }
 
@@ -831,6 +892,7 @@ async function comRPC(method, request, noCheck, _body) {
         return await response.json();
     } catch (error) {
         if (!noCheck) console.info("Request error:", error);
+        throw error;
     }
 }
 
