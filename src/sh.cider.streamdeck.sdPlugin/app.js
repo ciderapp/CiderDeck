@@ -138,7 +138,7 @@ Object.keys(actions).forEach(actionKey => {
                 comRPC("POST", "next");
                 break;
             case 'previousAction':
-                comRPC("POST", "previous");
+                goBack();
                 break;
             case 'likeAction':
                 setRating(1);
@@ -265,7 +265,7 @@ async function checkServerStatus() {
         const response = await fetch('http://127.0.0.1:10767/api/v1/playback/active', {
             headers: {
                 'Content-Type': 'application/json',
-                'apptoken': window.token
+                apptoken: window.token
             }
         });
         const data = await response.json();
@@ -305,7 +305,7 @@ async function checkAuthKey() {
         console.debug("[DEBUG] [Auth] Successfully authenticated with Cider");
         isAuthenticated = true;
     } catch (error) {
-        console.info("[ERROR] [Auth] Failed to authenticate:", error.message);
+        console.info("[ERROR] [Auth] Failed to authenticate:", error);
     }
 }
 
@@ -331,7 +331,7 @@ function handleConnectionFailure() {
 function startWebSocket() {
     return new Promise((resolve, reject) => {
         try {
-            const CiderApp = io('http://127.0.0.1:10767', {
+            const CiderApp = io('http://localhost:10767', {
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
                 timeout: 10000 // 10 seconds timeout
@@ -394,6 +394,7 @@ function clearCachedData() {
     window.statusCache = null;
     window.addedToLibrary = null;
     window.ratingCache = null;
+    window.currentPlaybackTime = null;
 
     // Reset playback modes
     currentRepeatMode = 0;
@@ -431,6 +432,7 @@ function handlePlaybackEvent({ data, type }) {
         case "playbackStatus.playbackTimeDidChange":
             setPlaybackStatus(data.isPlaying);
             if (window.contexts.ciderPlaybackAction[0]) {
+                window.currentPlaybackTime = data.currentPlaybackTime;
                 setPlaybackTime(data.currentPlaybackTime, data.currentPlaybackDuration);
             }
             break;
@@ -610,7 +612,6 @@ function updateShuffleMode(mode) {
 
 async function setRepeatMode() {
     if (currentRepeatMode === 3) return; // Don't do anything if disabled
-
     try {
         // Predict the next mode
         const predictedMode = (currentRepeatMode + 1) % 3;
@@ -661,6 +662,20 @@ async function setShuffleMode() {
         console.error("[ERROR] [Shuffle] Error toggling shuffle mode:", error);
         // Revert to previous state if there was an error
         updateShuffleMode(currentShuffleMode);
+    }
+}
+
+async function goBack() {
+    // Go to previous track, but first set the track position to 0 to see if a user is trying to just go back to the start, if not (within 10 seconds of current track) then go back to the previous track.
+    // This is a bit of a hack, but it works for now.
+
+    if (window.currentPlaybackTime > 10) {
+        console.debug("[DEBUG] [Playback] Going to previous track");
+        await comRPC("POST", "previous");
+    } else {
+        console.log("Current Time", window.currentPlaybackTime);
+        console.debug("[DEBUG] [Playback] Seeking to start of current track");
+        await comRPC("POST", "seek", true, { position: 0 });
     }
 }
 
