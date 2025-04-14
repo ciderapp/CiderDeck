@@ -3,19 +3,29 @@
 
 let globalSettings = {};
 
-$PI.onConnected((jsn) => {
-    const {actionInfo, appInfo, connection, messageType, port, uuid} = jsn;
+$PI.onConnected(() => {
     $PI.getGlobalSettings();
 });
 
 function loadSettings() {
-    document.querySelectorAll('[data-setting]').forEach(element => {
+    // Define defaults for all settings
+    const defaults = {
+        enableMarquee: true,
+        marqueeSpeed: 200,
+        marqueeLength: 15,
+        marqueeDelay: 2000,
+        tapBehavior: 'default',
+        pressBehavior: 'default',
+        volumeStep: 5,
+        authKey: ''
+    };    document.querySelectorAll('[data-setting]').forEach(element => {
         const settingName = element.dataset.setting;
+        if (!settingName) return; // Skip elements without data-setting attribute
+        
         let value;
 
-        if (settingName === 'useAdaptiveIcons') {
-            value = globalSettings.iconSettings?.useAdaptiveIcons;
-        } else if (['enableMarquee', 'marqueeSpeed', 'marqueeLength', 'marqueeDelay'].includes(settingName)) {
+        // Extract value from nested settings objects
+        if (['enableMarquee', 'marqueeSpeed', 'marqueeLength', 'marqueeDelay'].includes(settingName)) {
             value = globalSettings.marqueeSettings?.[settingName === 'enableMarquee' ? 'enabled' : settingName];
         } else if (settingName === 'authKey') {
             value = globalSettings.authorization?.rpcKey;
@@ -27,17 +37,20 @@ function loadSettings() {
             value = globalSettings.knobSettings?.volumeStep;
         }
 
+        // Apply defaults if value is undefined or null
+        value = value ?? defaults[settingName];
+
+        // Set the form field value based on its type
         if (element.type === 'checkbox') {
-            element.checked = value ?? element.checked;
+            element.checked = Boolean(value);
         } else if (element.type === 'number') {
-            element.value = value ?? element.value;
+            element.value = typeof value === 'number' ? value : defaults[settingName];
         } else if (element.type === 'select-one') {
-            element.value = value ?? element.value;
+            element.value = value || defaults[settingName];
         } else if (element.type === 'range') {
-            element.value = value ?? element.value;
-            console.log('Setting range value:', element.value);
+            element.value = typeof value === 'number' ? value : defaults[settingName];
         } else {
-            element.value = value ?? '';
+            element.value = value || defaults[settingName];
         }
     });
     
@@ -45,36 +58,48 @@ function loadSettings() {
 }
 
 function saveSettings() {
+    // Clear existing settings to avoid stale values
+    const tempSettings = {};
+
     document.querySelectorAll('[data-setting]').forEach(element => {
         const settingName = element.dataset.setting;
+        if (!settingName) return; // Skip elements without a data-setting attribute
+        
         if (element.type === 'checkbox') {
-            globalSettings[settingName] = element.checked;
+            // Checkboxes always have a valid state
+            tempSettings[settingName] = element.checked;
         } else if (element.type === 'number') {
-            globalSettings[settingName] = parseInt(element.value);
-        } else {
-            globalSettings[settingName] = element.value;
+            // For number inputs, use default if empty or NaN
+            const numValue = parseInt(element.value);
+            if (!isNaN(numValue)) {
+                tempSettings[settingName] = numValue;
+            }
+        } else if (element.type === 'select-one') {
+            // Select elements always have a value
+            tempSettings[settingName] = element.value;
+        } else if (element.value.trim() !== '') {
+            // For other inputs, only save if non-empty after trimming
+            tempSettings[settingName] = element.value.trim();
         }
     });
 
-    const configJSON = {
-        iconSettings: {
-            useAdaptiveIcons: globalSettings.useAdaptiveIcons
-        },
+    // Update globalSettings with validated values
+    Object.assign(globalSettings, tempSettings);    const configJSON = {
         marqueeSettings: {
-            enabled: globalSettings.enableMarquee,
-            speed: globalSettings.marqueeSpeed,
-            length: globalSettings.marqueeLength,
-            delay: globalSettings.marqueeDelay
+            enabled: globalSettings.enableMarquee || false,
+            speed: globalSettings.marqueeSpeed || 200,
+            length: globalSettings.marqueeLength || 15,
+            delay: globalSettings.marqueeDelay || 2000
         },
         tapSettings: {
-            tapBehavior: globalSettings.tapBehavior
+            tapBehavior: globalSettings.tapBehavior || 'default'
         },
         knobSettings: {
-            pressBehavior: globalSettings.pressBehavior,
-            volumeStep: globalSettings.volumeStep
+            pressBehavior: globalSettings.pressBehavior || 'default',
+            volumeStep: globalSettings.volumeStep || 5
         },
         authorization: {
-            rpcKey: globalSettings.authKey
+            rpcKey: globalSettings.authKey || ''
         }
     };
 
@@ -103,36 +128,66 @@ document.getElementById('save-settings').addEventListener('click', (event) => {
 
 document.getElementById('reset-settings').addEventListener('click', (event) => {
     event.preventDefault();
-    
+      // Define default settings - preserving your original preferred defaults
     const defaultSettings = {
-        iconSettings: {
-            useAdaptiveIcons: true,
-        },
         marqueeSettings: {
             enabled: true,
             speed: 200,
             length: 15,
-            delay: 2000,
+            delay: 2000
         },
         tapSettings: {
-            tapBehavior: "addToLibrary",
+            tapBehavior: "addToLibrary"
         },
         knobSettings: {
             pressBehavior: "togglePlay",
-            volumeStep: 1,
+            volumeStep: 1
         },
         authorization: {
             rpcKey: ""
         }
     };
-
-    globalSettings = defaultSettings;
+    
+    // Properly reset global settings to defaults
+    globalSettings = JSON.parse(JSON.stringify(defaultSettings));
+    
+    // Update UI to reflect default values
     loadSettings();
-    saveSettings();
+    
+    // Save to Stream Deck
+    $PI.setGlobalSettings(defaultSettings);
+    
+    console.log('Settings reset to defaults:', defaultSettings);
 });
 
 $PI.onDidReceiveGlobalSettings(({payload}) => {
     console.log('Received global settings:', payload.settings);
-    globalSettings = payload.settings;
+    
+    // Ensure we have a proper structure by providing defaults for missing values
+    const receivedSettings = payload.settings || {};
+      // Create a properly structured settings object with defaults for missing values
+    const validatedSettings = {
+        marqueeSettings: {
+            enabled: receivedSettings.marqueeSettings?.enabled ?? true,
+            speed: receivedSettings.marqueeSettings?.speed ?? 200,
+            length: receivedSettings.marqueeSettings?.length ?? 15,
+            delay: receivedSettings.marqueeSettings?.delay ?? 2000
+        },
+        tapSettings: {
+            tapBehavior: receivedSettings.tapSettings?.tapBehavior ?? "addToLibrary"
+        },
+        knobSettings: {
+            pressBehavior: receivedSettings.knobSettings?.pressBehavior ?? "togglePlay",
+            volumeStep: receivedSettings.knobSettings?.volumeStep ?? 1
+        },
+        authorization: {
+            rpcKey: receivedSettings.authorization?.rpcKey ?? ""
+        }
+    };
+    
+    // Update global settings with validated structure
+    globalSettings = validatedSettings;
+    
+    // Load settings into form
     loadSettings();
 });

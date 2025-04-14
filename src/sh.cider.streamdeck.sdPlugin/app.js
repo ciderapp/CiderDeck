@@ -8,6 +8,7 @@
 
 /// <reference path="libs/js/action.js" />
 /// <reference path="libs/js/stream-deck.js" />
+/// <reference path="libs/js/cache-manager.js" />
 
 // ==========================================================================
 //  Global State
@@ -21,7 +22,6 @@ const AppState = {
 };
 
 let currentAppState = AppState.STARTING_UP;
-let isAuthenticated = false;
 
 // Initialize actions and contexts
 const actions = {
@@ -62,10 +62,9 @@ const offlineStates = {
 // Global Configuration
 let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
 let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15; lastMarqueeUpdateTime = 0;
-let marqueeEnabled = true, tapBehavior = 'addToLibrary', volumeStep = 1, pressBehavior = 'togglePlay';
+let marqueeEnabled = true;
 let currentRepeatMode = 0; // 0: off, 1: repeat one, 2: repeat all, 3: disabled
 let currentShuffleMode = 0; // 0: off, 1: on, 2: disabled
-let useAdaptiveIcons = false, rpcKey = null;
 
 // Ensure window.contexts is initialized
 window.contexts = window.contexts || {};
@@ -210,7 +209,6 @@ Object.keys(actions).forEach(actionKey => {
 // ==========================================================================
 
 const defaultSettings = {
-    iconSettings: { useAdaptiveIcons: true },
     marqueeSettings: {
         enabled: true,
         speed: 200,
@@ -227,8 +225,6 @@ const defaultSettings = {
 
 function updateSettings(settings) {
     const mergedSettings = {...defaultSettings, ...settings};
-
-    useAdaptiveIcons = mergedSettings.iconSettings.useAdaptiveIcons;
     
     Object.assign(window, {
         marqueeEnabled: mergedSettings.marqueeSettings.enabled,
@@ -251,7 +247,6 @@ function updateSettings(settings) {
 $SD.onDidReceiveGlobalSettings(({ payload }) => {
     console.debug(`[DEBUG] [Settings] Global settings received:`, payload.settings);
     updateSettings(payload.settings);
-    checkAuthKey();
 });
 
 // ==========================================================================
@@ -259,22 +254,6 @@ $SD.onDidReceiveGlobalSettings(({ payload }) => {
 // ==========================================================================
 
 let isConnected = false;
-
-async function checkServerStatus() {
-    try {
-        const response = await fetch('http://127.0.0.1:10767/api/v1/playback/active', {
-            headers: {
-                'Content-Type': 'application/json',
-                apptoken: window.token
-            }
-        });
-        const data = await response.json();
-        return data.status === "ok";
-    } catch (error) {
-        console.debug("[DEBUG] [Server Check] Server not responding:", error.message);
-        return false;
-    }
-}
 
 async function startupProcess() {
     currentAppState = AppState.STARTING_UP;
@@ -293,38 +272,6 @@ async function startupProcess() {
         console.info("[ERROR] [Startup] Startup process failed:", error);
         currentAppState = AppState.ERROR;
         handleDisconnection();
-    }
-}
-
-async function checkAuthKey() {
-    try {
-        const data = await comRPC("GET", "active", true);
-        if (data.error) {
-            throw new Error("Invalid response from Cider");
-        }
-        console.debug("[DEBUG] [Auth] Successfully authenticated with Cider");
-        isAuthenticated = true;
-    } catch (error) {
-        console.info("[ERROR] [Auth] Failed to authenticate:", error);
-    }
-}
-
-function handleConnectionFailure() {
-    isAuthenticated = false;
-    setOfflineStates();
-    
-    if (!serverCheckInterval) {
-        serverCheckInterval = setInterval(async () => {
-            const isServerAlive = await checkServerStatus();
-            if (isServerAlive) {
-                console.log("[INFO] [Connection] Server is back online. Attempting to reconnect...");
-                clearInterval(serverCheckInterval);
-                retryAttempts = 0;
-                startupProcess();
-            } else {
-                console.debug("[DEBUG] [Connection] Server still offline. Continuing to monitor...");
-            }
-        }, SERVER_CHECK_INTERVAL);
     }
 }
 
@@ -388,13 +335,8 @@ function handleDisconnection() {
 }
 
 function clearCachedData() {
-    // Clear all cached data
-    window.artworkCache = null;
-    window.songCache = null;
-    window.statusCache = null;
-    window.addedToLibrary = null;
-    window.ratingCache = null;
-    window.currentPlaybackTime = null;
+    // Clear all cached data using the cache manager
+    cacheManager.clearAll();
 
     // Reset playback modes
     currentRepeatMode = 0;
@@ -407,8 +349,6 @@ function clearCachedData() {
     isChangingVolume = false;
     isMuted = false;
     previousVolume = null;
-
-    console.log("[INFO] [Cache] Cleared all cached data");
 }
 
 function handlePlaybackEvent({ data, type }) {
@@ -502,22 +442,20 @@ async function setDefaults() {
 
 async function setAdaptiveData({ inLibrary, inFavorites }) {
     console.debug("[DEBUG] [Library] inLibrary:", inLibrary, "inFavorites:", inFavorites);
-    if (window.addedToLibrary !== inLibrary) {
+    if (cacheManager.checkAndUpdate('addedToLibrary', inLibrary)) {
         window.contexts.addToLibraryAction?.forEach(context => {
             $SD.setState(context, inLibrary ? 1 : 0);
         });
-        window.addedToLibrary = inLibrary;
         console.debug("[DEBUG] [Library] Updated library status:", inLibrary);
     }
 
-    if (window.ratingCache !== inFavorites) {
+    if (cacheManager.checkAndUpdate('rating', inFavorites ? 1 : 0)) {
         window.contexts.likeAction?.forEach(context => {
             $SD.setState(context, inFavorites ? 1 : 0);
         });
         window.contexts.dislikeAction?.forEach(context => {
             $SD.setState(context, 0); // Always set to default state for dislike
         });
-        window.ratingCache = inFavorites ? 1 : 0;
         console.debug("[DEBUG] [Favorites] Updated favorites status:", inFavorites);
     }
 }
@@ -525,7 +463,7 @@ async function setAdaptiveData({ inLibrary, inFavorites }) {
 async function setData({ state, attributes }) {
     setPlaybackStatus(state);
 
-    let artwork = window.artworkCache
+    let artwork = cacheManager.get('artwork');
 
     if (attributes?.artwork) {
         artwork = attributes.artwork?.url?.replace('{w}', attributes?.artwork?.width).replace('{h}', attributes?.artwork?.height);
@@ -537,8 +475,7 @@ async function setData({ state, attributes }) {
 
     let logMessage = "[DEBUG] [Playback] ";
 
-    if (window.artworkCache !== artwork && artwork) {
-        window.artworkCache = artwork;
+    if (cacheManager.checkAndUpdate('artwork', artwork) && artwork) {
         getBase64Image(artwork).then(art64 => {
             window.contexts.albumArtAction?.forEach(context => setImage(context, art64, 0));
             if (window.contexts.ciderPlaybackAction[0]) {
@@ -546,10 +483,7 @@ async function setData({ state, attributes }) {
             }
         });
         logMessage += `Updated artwork: ${artwork}; `;
-    }
-
-    if (window.songCache !== songName) {
-        window.songCache = songName;
+    }    if (cacheManager.checkAndUpdate('song', songName)) {
         window.contexts.songNameAction?.forEach(context => setTitle(context, songName, 0));
         const fullTitle = `${songName} - ${albumName}`;
         clearMarquee();
@@ -562,9 +496,7 @@ async function setData({ state, attributes }) {
         logMessage += `Updated song: ${songName}; Artist: ${artistName}; Album: ${albumName}; `;
     }
 
-    const toggleIcon = useAdaptiveIcons
-        ? state === "playing" ? 'play.png' : 'play.png'
-        : state === "playing" ? 'pause.png' : 'play.png';
+    const toggleIcon = state === "playing" ? 'pause.png' : 'play.png';
 
     window.contexts.toggleAction?.forEach(context => setImage(context, `actions/playback/assets/${toggleIcon}`, 0));
     logMessage += `State: ${state === "playing" ? "playing" : "paused"}`;
@@ -577,14 +509,12 @@ async function setManualData(playbackInfo) {
 }
 
 async function setPlaybackStatus(status) {
-    if (window.statusCache !== status) {
-        window.statusCache = status;
-
-        // Check if its a string, if it is reformat to 0/1
-        if (typeof status === 'string') {
-            status = status === 'playing' ? 1 : 0;
-        }
-            
+    // Convert string status to numeric value if needed
+    if (typeof status === 'string') {
+        status = status === 'playing' ? 1 : 0;
+    }
+    
+    if (cacheManager.checkAndUpdate('status', status)) {
         window.contexts.toggleAction?.forEach(context => {
             $SD.setState(context, status ? 1 : 0);
         });
@@ -608,61 +538,6 @@ function updateShuffleMode(mode) {
     window.contexts.shuffleAction?.forEach(context => {
         $SD.setState(context, currentShuffleMode);
     });
-}
-
-async function setRepeatMode() {
-    if (currentRepeatMode === 3) return; // Don't do anything if disabled
-    try {
-        // Predict the next mode
-        const predictedMode = (currentRepeatMode + 1) % 3;
-        
-        // Update UI immediately (optimistic update)
-        updateRepeatMode(predictedMode);
-
-        // Send request to server
-        const response = await comRPC("POST", "toggle-repeat", true);
-        
-        if (response && response.status === "ok") {
-            // The Socket.io event will handle the actual update if it differs from our prediction
-            console.debug(`[DEBUG] [Repeat] Toggled repeat mode`);
-        } else {
-            console.warn("[WARN] [Repeat] Failed to toggle repeat mode");
-            // Revert to previous state if the request failed
-            updateRepeatMode(currentRepeatMode);
-        }
-    } catch (error) {
-        console.error("[ERROR] [Repeat] Error toggling repeat mode:", error);
-        // Revert to previous state if there was an error
-        updateRepeatMode(currentRepeatMode);
-    }
-}
-
-async function setShuffleMode() {
-    if (currentShuffleMode === 2) return; // Don't do anything if disabled
-
-    try {
-        // Predict the next mode
-        const predictedMode = currentShuffleMode === 0 ? 1 : 0;
-        
-        // Update UI immediately (optimistic update)
-        updateShuffleMode(predictedMode);
-
-        // Send request to server
-        const response = await comRPC("POST", "toggle-shuffle", true);
-        
-        if (response && response.status === "ok") {
-            // The Socket.io event will handle the actual update if it differs from our prediction
-            console.debug(`[DEBUG] [Shuffle] Toggled shuffle mode`);
-        } else {
-            console.warn("[WARN] [Shuffle] Failed to toggle shuffle mode");
-            // Revert to previous state if the request failed
-            updateShuffleMode(currentShuffleMode);
-        }
-    } catch (error) {
-        console.error("[ERROR] [Shuffle] Error toggling shuffle mode:", error);
-        // Revert to previous state if there was an error
-        updateShuffleMode(currentShuffleMode);
-    }
 }
 
 async function goBack() {
@@ -696,6 +571,7 @@ async function updatePlaybackModes() {
 }
 
 async function setPlaybackTime(time, duration) {
+    cacheManager.set('currentPlaybackTime', time);
     const progress = Math.round((time / duration) * 100);
 
     // Update Stream Deck+ display
@@ -710,18 +586,18 @@ async function setPlaybackTime(time, duration) {
 // ==========================================================================
 
 async function addToLibrary() {
-    if (!window.addedToLibrary) {
+    if (!cacheManager.get('addedToLibrary')) {
         await comRPC("POST", "add-to-library", true);
         window.contexts.addToLibraryAction?.forEach(context => {
             $SD.setState(context, 1);
         });
-        window.addedToLibrary = true;
+        cacheManager.set('addedToLibrary', true);
         console.debug("[DEBUG] [Library] Added to library");
     }
 }
 
 async function setRating(ratingValue) {
-    if (window.ratingCache !== ratingValue) {
+    if (cacheManager.get('rating') !== ratingValue) {
         await comRPC("POST", "set-rating", true, { rating: ratingValue });
 
         window.contexts.likeAction?.forEach(context => {
@@ -731,7 +607,7 @@ async function setRating(ratingValue) {
             $SD.setState(context, ratingValue === -1 ? 1 : 0);
         });
 
-        window.ratingCache = ratingValue;
+        cacheManager.set('rating', ratingValue);
         console.debug("[DEBUG] [Rating] Updated rating to:", ratingValue);
     }
 }
