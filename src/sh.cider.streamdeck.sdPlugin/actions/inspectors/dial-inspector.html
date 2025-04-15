@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Cider Dial Controls</title>
+    <link rel="stylesheet" href="../../libs/css/sdpi.css">
+    <style>
+        .settings-tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 5px;
+            text-align: center;
+            background: #2D2D2D;
+            cursor: pointer;
+            border: 1px solid #3D3D3D;
+        }
+        .tab-button.active {
+            background: #3D3D3D;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="sdpi-wrapper">
+        <div class="sdpi-heading">Cider Dial Controls</div>
+        <div class="sdpi-description">Configure dial rotation and button press behavior</div>
+
+        <div class="settings-tabs">
+            <div class="tab-button active" data-tab="knob-settings">Dial Controls</div>
+            <div class="tab-button" data-tab="feedback-settings">Display</div>
+        </div>
+
+        <form id="cider-dial-settings">
+            <!-- Knob Settings Tab -->
+            <div id="knob-settings" class="tab-content active">
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Rotation Action</div>
+                    <select id="rotationAction" data-setting="rotationAction" class="sdpi-item-value select">
+                        <option value="volume">Volume Control</option>
+                        <option value="playbackPos">Playback Position</option>
+                        <option value="skipTrack">Skip Track</option>
+                    </select>
+                </div>
+                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Volume Step</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="1">Fine</span>
+                        <input type="range" min="1" max="10" value="1" data-setting="volumeStep" id="volumeStep">
+                        <span class="clickable" value="10">Coarse</span>
+                    </div>
+                </div>
+                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Press Behavior</div>
+                    <select id="pressBehavior" data-setting="pressBehavior" class="sdpi-item-value select">
+                        <option value="togglePlay">Play/Pause</option>
+                        <option value="mute">Mute/Unmute</option>
+                        <option value="favorite">Like/Unlike</option>
+                        <option value="shuffle">Toggle Shuffle</option>
+                        <option value="repeat">Toggle Repeat</option>
+                    </select>
+                </div>
+                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Touch Behavior</div>
+                    <select id="tapBehavior" data-setting="tapBehavior" class="sdpi-item-value select">
+                        <option value="addToLibrary">Add to Library</option>
+                        <option value="dislike">Dislike</option>
+                        <option value="showQueue">Show Queue</option>
+                        <option value="playFavorites">Play Favorites</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Display Settings Tab -->
+            <div id="feedback-settings" class="tab-content">                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Enable Marquee</div>
+                    <div class="sdpi-item-value">
+                        <input id="enableMarquee" type="checkbox" data-setting="marquee.enabled" class="sdProperty sdCheckbox" checked>
+                        <label for="enableMarquee"><span></span></label>
+                    </div>
+                </div>
+                
+                <div class="sdpi-item" id="marquee-speed-container">
+                    <div class="sdpi-item-label">Scroll Speed</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="100">Slow</span>
+                        <input type="range" min="100" max="300" value="200" data-setting="marquee.speed" id="marqueeSpeed">
+                        <span class="clickable" value="300">Fast</span>
+                    </div>
+                </div>
+                
+                <div class="sdpi-item" id="marquee-length-container">
+                    <div class="sdpi-item-label">Display Length</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="10">Short</span>
+                        <input type="range" min="10" max="25" value="15" data-setting="marquee.length" id="marqueeLength">
+                        <span class="clickable" value="25">Long</span>
+                    </div>
+                </div>
+                
+                <div class="sdpi-item" id="marquee-delay-container">
+                    <div class="sdpi-item-label">Pause Duration</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="1000">Short</span>
+                        <input type="range" min="1000" max="5000" value="2000" data-setting="marquee.delay" id="marqueeDelay">
+                        <span class="clickable" value="5000">Long</span>
+                    </div>
+                </div>                  <div class="sdpi-item">
+                    <div class="sdpi-item-label">Show Icons</div>
+                    <div class="sdpi-item-value">
+                        <input id="showIcons" type="checkbox" data-setting="showIcons" class="sdProperty sdCheckbox" checked>
+                        <label for="showIcons"><span></span></label>
+                    </div>
+                </div>
+                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Show Album Art on Dial</div>
+                    <div class="sdpi-item-value">
+                        <input id="showArtworkOnDial" type="checkbox" data-setting="showArtworkOnDial" class="sdProperty sdCheckbox" checked>
+                        <label for="showArtworkOnDial"><span></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="save-settings" class="sdpi-item-value">Save Settings</button>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="reset-settings" class="sdpi-item-value">Reset to Defaults</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../../libs/js/constants.js"></script>
+    <script src="../../libs/js/utils.js"></script>
+    <script src="../../libs/js/events.js"></script>
+    <script src="../../libs/js/api.js"></script>
+    <script src="../../libs/js/property-inspector.js"></script>
+    <script src="../../libs/js/dynamic-styles.js"></script>
+    <script src="../../libs/js/base-inspector.js"></script>
+    <script src="dial-inspector.js"></script>
+</body>
+</html>

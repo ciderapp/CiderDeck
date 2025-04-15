@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Song Display Settings</title>
+    <link rel="stylesheet" href="../../libs/css/sdpi.css">
+    <style>
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            border: 1px solid #666;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        .settings-tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 5px;
+            text-align: center;
+            background: #2D2D2D;
+            cursor: pointer;
+            border: 1px solid #3D3D3D;
+        }
+        .tab-button.active {
+            background: #3D3D3D;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="sdpi-wrapper">
+        <div class="sdpi-heading">Song Display Settings</div>
+        <div class="sdpi-description">Customize how your song information appears</div>
+
+        <div class="settings-tabs">
+            <div class="tab-button active" data-tab="text-settings">Text</div>
+            <div class="tab-button" data-tab="content-settings">Content</div>
+            <div class="tab-button" data-tab="style-settings">Style</div>
+            <div class="tab-button" data-tab="advanced-settings">Advanced</div>
+        </div>
+
+        <form id="song-display-settings">
+            <!-- Text Settings Tab -->
+            <div id="text-settings" class="tab-content active">                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Font Size</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="12">12</span>
+                        <input type="range" min="12" max="24" value="16" data-setting="fontSize" id="fontSize">
+                        <span class="clickable" value="24">24</span>
+                    </div>
+                </div>                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Font Family</div>
+                    <select id="fontFamily" data-setting="fontFamily" class="sdpi-item-value select">
+                        <option value="Figtree">Figtree</option>
+                        <option value="Arial">Arial</option>
+                        <option value="'Helvetica Neue', Helvetica">Helvetica</option>
+                        <option value="'Segoe UI', Tahoma">Segoe UI</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="'SF Pro Display'">SF Pro</option>
+                        <option value="monospace">Monospace</option>
+                    </select>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Text Style</div>
+                    <select id="textStyle" data-setting="textStyle" class="sdpi-item-value select">
+                        <option value="normal">Normal</option>
+                        <option value="bold">Bold</option>
+                        <option value="italic">Italic</option>
+                        <option value="bold italic">Bold Italic</option>
+                    </select>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Text Color</div>
+                    <input id="textColor" type="color" data-setting="textColor" class="sdpi-item-value" value="#FFFFFF">
+                    <div id="textColorPreview" class="color-preview"></div>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Background</div>
+                    <input id="backgroundColor" type="color" data-setting="backgroundColor" class="sdpi-item-value" value="#000000">
+                    <div id="bgColorPreview" class="color-preview"></div>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Text Alignment</div>
+                    <select id="alignment" data-setting="alignment" class="sdpi-item-value select">
+                        <option value="left">Left</option>
+                        <option value="center" selected>Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Content Settings Tab -->
+            <div id="content-settings" class="tab-content">
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Show Artist</div>
+                    <div class="sdpi-item-value">
+                        <input id="showArtist" type="checkbox" data-setting="showArtist" class="sdProperty sdCheckbox" checked>
+                        <label for="showArtist"><span></span></label>
+                    </div>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Show Album</div>
+                    <div class="sdpi-item-value">
+                        <input id="showAlbum" type="checkbox" data-setting="showAlbum" class="sdProperty sdCheckbox">
+                        <label for="showAlbum"><span></span></label>
+                    </div>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Max Lines</div>
+                    <select id="maxLines" data-setting="maxLines" class="sdpi-item-value select">
+                        <option value="1">1 Line</option>
+                        <option value="2" selected>2 Lines</option>
+                        <option value="3">3 Lines</option>
+                    </select>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Vertical Position</div>
+                    <select id="verticalPosition" data-setting="verticalPosition" class="sdpi-item-value select">
+                        <option value="top">Top</option>
+                        <option value="center" selected>Center</option>
+                        <option value="bottom">Bottom</option>
+                    </select>
+                </div>
+            </div>            <!-- Style Settings Tab -->
+            <div id="style-settings" class="tab-content">
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Text Shadow</div>
+                    <div class="sdpi-item-value">
+                        <input id="useShadow" type="checkbox" data-setting="useShadow" class="sdProperty sdCheckbox" checked>
+                        <label for="useShadow"><span></span></label>
+                    </div>
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Show Icons</div>
+                    <div class="sdpi-item-value">
+                        <input id="showIcons" type="checkbox" data-setting="showIcons" class="sdProperty sdCheckbox">
+                        <label for="showIcons"><span></span></label>
+                    </div>
+                </div>
+                <div class="sdpi-item" id="icon-size-container">
+                    <div class="sdpi-item-label">Icon Size</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="16">Small</span>
+                        <input type="range" min="16" max="32" value="24" data-setting="iconSize" id="iconSize">
+                        <span class="clickable" value="32">Large</span>
+                    </div>
+                </div>                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Enable Marquee (WIP, May not function)</div>
+                    <div class="sdpi-item-value">
+                        <input id="marqueeEnabled" type="checkbox" data-setting="marquee.enabled" class="sdProperty sdCheckbox" checked>
+                        <label for="marqueeEnabled"><span></span></label>
+                    </div>
+                </div>
+                <div class="sdpi-item" id="marquee-speed-container">
+                    <div class="sdpi-item-label">Scroll Speed</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="20">Slow</span>
+                        <input type="range" min="20" max="100" value="40" data-setting="marquee.speed" id="marqueeSpeed">
+                        <span class="clickable" value="100">Fast</span>
+                    </div>
+                </div>
+                <div class="sdpi-item" id="marquee-pause-container">
+                    <div class="sdpi-item-label">Pause Duration</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="1000">Short</span>
+                        <input type="range" min="1000" max="5000" value="2000" data-setting="marquee.pause" id="marqueePause">
+                        <span class="clickable" value="5000">Long</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Settings Tab -->
+            <div id="advanced-settings" class="tab-content">
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Custom Prefix</div>
+                    <input id="textPrefix" type="text" data-setting="textPrefix" class="sdpi-item-value" placeholder="Now Playing: ">
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Custom Format</div>
+                    <input id="customFormat" type="text" data-setting="customFormat" class="sdpi-item-value" placeholder="{title} - {artist}">
+                </div>
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Line Spacing</div>
+                    <div class="sdpi-item-value">
+                        <span class="clickable" value="1.0">Tight</span>
+                        <input type="range" min="10" max="20" value="13" data-setting="lineSpacing" id="lineSpacing">
+                        <span class="clickable" value="2.0">Loose</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="save-settings" class="sdpi-item-value">Save Settings</button>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="reset-settings" class="sdpi-item-value">Reset to Defaults</button>
+            </div>
+        </form>
+    </div>    <script src="../../libs/js/constants.js"></script>
+    <script src="../../libs/js/utils.js"></script>
+    <script src="../../libs/js/events.js"></script>
+    <script src="../../libs/js/api.js"></script>
+    <script src="../../libs/js/property-inspector.js"></script>
+    <script src="../../libs/js/dynamic-styles.js"></script>
+    <script src="../../libs/js/base-inspector.js"></script>
+    <script src="song-display-inspector.js"></script>
+</body>
+</html>

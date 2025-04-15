@@ -11,10 +11,13 @@ class CacheManager {
         this.cache = {
             artwork: null,
             song: null,
+            artist: null,
+            album: null,
             status: null,
             addedToLibrary: null,
             rating: null,
-            currentPlaybackTime: null
+            currentPlaybackTime: null,
+            songDisplaySettings: null
         };
     }
 

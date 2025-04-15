@@ -6,7 +6,7 @@
 	"SDKVersion": 2,
 	"Icon": "actions/assets/app/icon",
 	"URL": "https://cider.sh",
-	"Version": "2.5.0",
+	"Version": "3.1.0",
 	"Software": {
 		"MinimumVersion": "5.0"
 	},
@@ -48,11 +48,11 @@
 			],
 			"Tooltip": "Provides various controls for managing your media through Cider.",
 			"UUID": "sh.cider.streamdeck.playback",
-			"PropertyInspectorPath": "actions/inspectors/inspector.html"
+			"PropertyInspectorPath": "actions/inspectors/dial-inspector.html"
 		},
 		{
 			"Icon": "actions/assets/app/desk-name-plate",
-			"Name": "Song Name",
+			"Name": "Song Display",
 			"Controllers": ["Keypad"],
 			"DisableAutomaticStates": true,
 			"Encoder": {
@@ -68,7 +68,7 @@
 			],
 			"Tooltip": "Provides a tile to show the currently playing song from Cider.",
 			"UUID": "sh.cider.streamdeck.songname",
-			"PropertyInspectorPath": "actions/inspectors/inspector.html"
+			"PropertyInspectorPath": "actions/inspectors/song-display-inspector.html"
 		},
 		{
 			"Icon": "actions/assets/app/image-sparkle",

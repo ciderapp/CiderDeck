@@ -61,8 +61,7 @@ const offlineStates = {
 
 // Global Configuration
 let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
-let MARQUEE_SPEED = 200, MARQUEE_STEP = 1, PAUSE_DURATION = 2000, DISPLAY_LENGTH = 15; lastMarqueeUpdateTime = 0;
-let marqueeEnabled = true;
+let lastMarqueeUpdateTime = 0;
 let currentRepeatMode = 0; // 0: off, 1: repeat one, 2: repeat all, 3: disabled
 let currentShuffleMode = 0; // 0: off, 1: on, 2: disabled
 
@@ -76,6 +75,13 @@ window.contexts = window.contexts || {};
 $SD.onConnected(() => {
     console.debug('[DEBUG] [System] Stream Deck connected!');
     currentAppState = AppState.STARTING_UP;
+    
+    // Initialize the song renderer if it hasn't been
+    if (!window.songDisplayRenderer) {
+        console.debug('[DEBUG] [SongDisplay] Initializing song display renderer');
+        window.songDisplayRenderer = new SongDisplayRenderer();
+    }
+    
     setDefaults();
     $SD.getGlobalSettings();
 });
@@ -88,12 +94,43 @@ Object.keys(actions).forEach(actionKey => {
     if (!window.contexts[actionKey]) {
         window.contexts[actionKey] = [];
     }
-    const action = actions[actionKey];
-
-    action.onWillAppear(({ context }) => {
+    const action = actions[actionKey];    action.onWillAppear(({ context, payload }) => {
         if (!window.contexts[actionKey].includes(context)) {
             window.contexts[actionKey].push(context);
             console.debug(`[DEBUG] [Context] Context added for ${actionKey}: ${context}`);
+        }        // Handle song display settings if this is a song name action
+        if (actionKey === 'songNameAction') {
+            if (payload.settings?.songDisplaySettings) {
+                console.debug(`[DEBUG] [SongDisplay] Received settings on appearance:`, payload.settings.songDisplaySettings);
+                cacheManager.set('songDisplaySettings', payload.settings.songDisplaySettings);
+                
+                // Initialize the song renderer if it hasn't been yet
+                if (!window.songDisplayRenderer) {
+                    console.debug('[DEBUG] [SongDisplay] Initializing song display renderer on first appearance');
+                    window.songDisplayRenderer = new SongDisplayRenderer();
+                }
+                
+                // Update renderer configuration
+                window.songDisplayRenderer.updateSettings(payload.settings.songDisplaySettings);
+                
+                // Update display immediately if we have song info
+                if (cacheManager.get('song')) {
+                    updateCustomSongDisplay();
+                }
+            }
+            
+            // Add event handler for settings changes
+            action.onDidReceiveSettings(function(jsn) {
+                console.debug(`[DEBUG] [SongDisplay] Received updated settings:`, jsn.payload.settings);
+                if (jsn.payload.settings?.songDisplaySettings) {
+                    cacheManager.set('songDisplaySettings', jsn.payload.settings.songDisplaySettings);
+                    // Update renderer with new settings
+                    if (window.songDisplayRenderer) {
+                        window.songDisplayRenderer.updateSettings(jsn.payload.settings.songDisplaySettings);
+                        updateCustomSongDisplay();
+                    }
+                }
+            });
         }
     });
 
@@ -163,10 +200,12 @@ Object.keys(actions).forEach(actionKey => {
         }
     });
 
-    if (actionKey === 'ciderPlaybackAction') {
-        action.onDialDown(() => {
+    if (actionKey === 'ciderPlaybackAction') {        action.onDialDown(() => {
             console.debug(`[DEBUG] [Action] ciderPlaybackAction dial pressed`);
-            switch (window.pressBehavior) {
+            // Get press behavior from the hierarchical settings
+            const pressBehavior = window.ciderDeckSettings?.dial?.pressBehavior || 'togglePlay';
+            
+            switch (pressBehavior) {
                 case 'togglePlay':
                     comRPC("POST", "playpause");
                     setTimeout(() => {
@@ -184,11 +223,12 @@ Object.keys(actions).forEach(actionKey => {
 
         action.onDialRotate((jsonObj) => {
             handleVolumeChange(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0], null, jsonObj.payload);
-        });
-
-        action.onTouchTap(() => {
+        });        action.onTouchTap(() => {
             console.debug(`[DEBUG] [Action] ciderPlaybackAction touch tapped`);
-            switch (window.tapBehavior) {
+            // Get tap behavior from the hierarchical settings
+            const tapBehavior = window.ciderDeckSettings?.dial?.tapBehavior || 'addToLibrary';
+            
+            switch (tapBehavior) {
                 case 'addToLibrary':
                     addToLibrary();
                     break;
@@ -209,44 +249,207 @@ Object.keys(actions).forEach(actionKey => {
 // ==========================================================================
 
 const defaultSettings = {
-    marqueeSettings: {
-        enabled: true,
-        speed: 200,
-        delay: 2000,
-        length: 15
+    global: {
+        authorization: {
+            rpcKey: null
+        }
     },
-    tapSettings: { tapBehavior: 'addToLibrary' },
-    knobSettings: {
+    dial: {
+        rotationAction: 'volume',
         volumeStep: 1,
-        pressBehavior: 'togglePlay'
+        pressBehavior: 'togglePlay',
+        tapBehavior: 'addToLibrary',
+        marquee: {
+            enabled: true,
+            speed: 200,
+            length: 15,
+            delay: 2000
+        },
+        showIcons: true
     },
-    authorization: { rpcKey: null }
+    songDisplay: {
+        fontSize: 16,
+        fontFamily: 'Figtree',
+        textColor: '#FFFFFF',
+        backgroundColor: '#000000',
+        textAlign: 'center',
+        showArtist: true,
+        showAlbum: false,
+        maxLines: 2,
+        lineHeight: 1.2,
+        alignment: 'center',
+        showIcons: true,
+        useShadow: true,
+        iconSize: 24,
+        textStyle: 'bold',
+        verticalPosition: 'bottom',
+        lineSpacing: 13,
+        textPrefix: '',
+        customFormat: '',
+        marquee: {
+            enabled: false,
+            speed: 40,
+            pause: 2000
+        }
+    }
 };
 
 function updateSettings(settings) {
-    const mergedSettings = {...defaultSettings, ...settings};
+    // Deep merge to properly handle nested objects
+    const mergedSettings = deepMerge(defaultSettings, settings || {});
     
+    // Apply settings to window variables, prioritizing the new structure
+    // but maintaining backward compatibility
     Object.assign(window, {
-        marqueeEnabled: mergedSettings.marqueeSettings.enabled,
-        MARQUEE_SPEED: mergedSettings.marqueeSettings.speed,
-        PAUSE_DURATION: mergedSettings.marqueeSettings.delay,
-        DISPLAY_LENGTH: mergedSettings.marqueeSettings.length,
-        tapBehavior: mergedSettings.tapSettings.tapBehavior,
-        volumeStep: mergedSettings.knobSettings.volumeStep,
-        pressBehavior: mergedSettings.knobSettings.pressBehavior,
-        token: mergedSettings.authorization.rpcKey
+        // Marquee settings (display related)
+        marqueeEnabled: mergedSettings.dial?.marquee?.enabled ?? 
+                        mergedSettings.songDisplay?.marquee?.enabled ?? 
+                        mergedSettings.marqueeSettings?.enabled ?? true,
+        MARQUEE_SPEED: mergedSettings.dial?.marquee?.speed ?? 
+                      mergedSettings.songDisplay?.marquee?.speed ?? 
+                      mergedSettings.marqueeSettings?.speed ?? 200,
+        PAUSE_DURATION: mergedSettings.dial?.marquee?.delay ?? 
+                       mergedSettings.songDisplay?.marquee?.pause ?? 
+                       mergedSettings.marqueeSettings?.delay ?? 2000,
+        DISPLAY_LENGTH: mergedSettings.dial?.marquee?.length ?? 
+                       mergedSettings.marqueeSettings?.length ?? 15,
+        
+        // Behavior settings
+        tapBehavior: mergedSettings.dial?.tapBehavior ?? 
+                    mergedSettings.tapSettings?.tapBehavior ?? 'addToLibrary',
+        volumeStep: mergedSettings.dial?.volumeStep ?? 
+                   mergedSettings.knobSettings?.volumeStep ?? 1,
+        pressBehavior: mergedSettings.dial?.pressBehavior ?? 
+                      mergedSettings.knobSettings?.pressBehavior ?? 'togglePlay',
+        
+        // Authentication
+        token: mergedSettings.global?.authorization?.rpcKey ?? 
+              mergedSettings.authorization?.rpcKey ?? null
     });
+
+    // Store the complete settings for potential access by other components
+    window.ciderDeckSettings = mergedSettings;
 
     console.debug(`[DEBUG] [Settings] Updated settings:`, mergedSettings);
 
+    // Check if we have a token now but we're in startup state
+    const hasToken = !!(window.token);
+    
     if (currentAppState === AppState.STARTING_UP) {
         startupProcess();
+    } else if (currentAppState === AppState.ERROR && hasToken) {
+        // If we were in an error state and now have a token, try to restart
+        console.log("[INFO] [Settings] Token received while in error state, attempting to restart...");
+        currentAppState = AppState.STARTING_UP;
+        startupProcess();
     }
+}
+
+// Helper function to deep merge objects
+function deepMerge(target, source) {
+    const result = {...target};
+    
+    if (isObject(target) && isObject(source)) {
+        Object.keys(source).forEach(key => {
+            if (isObject(source[key])) {
+                if (!(key in target)) {
+                    result[key] = source[key];
+                } else {
+                    result[key] = deepMerge(target[key], source[key]);
+                }
+            } else {
+                result[key] = source[key];
+            }
+        });
+    }
+    
+    return result;
+}
+
+// Helper function to check if a value is an object
+function isObject(item) {
+    return (item && typeof item === 'object' && !Array.isArray(item));
 }
 
 $SD.onDidReceiveGlobalSettings(({ payload }) => {
     console.debug(`[DEBUG] [Settings] Global settings received:`, payload.settings);
     updateSettings(payload.settings);
+});
+
+// ==========================================================================
+//  Settings Notification Handlers
+// ==========================================================================
+
+// Add listeners for each action to handle direct PI notifications
+Object.keys(actions).forEach(actionKey => {
+    const action = actions[actionKey];
+    
+    // Listen for direct messages from Property Inspector
+    action.onSendToPlugin((data) => {
+        const payload = data.payload;
+        
+        if (!payload) return;
+        
+        // Handle the 'settingsChanged' event to immediately update specific component settings
+        if (payload.action === 'settingsChanged' && payload.actionType) {
+            console.debug(`[DEBUG] [Settings] Received settingsChanged notification for ${payload.actionType}:`, payload.settings);
+            
+            // Update global settings if we have an actionType specified
+            const updatedSettings = {
+                ...window.ciderDeckSettings,
+                [payload.actionType]: payload.settings
+            };
+            
+            // Apply the settings update
+            updateSettings(updatedSettings);
+              // If this is song display settings, update immediately
+            if (payload.actionType === 'songDisplay' && window.songDisplayRenderer) {
+                console.debug('[DEBUG] [SongDisplay] Applying hot-reloaded settings');
+                
+                // First update the cache with the new settings
+                cacheManager.set('songDisplaySettings', payload.settings);
+                
+                // Then make sure the renderer gets the latest settings
+                window.songDisplayRenderer.updateSettings(payload.settings);
+                
+                // Force a complete re-render with the new settings
+                const currentSongInfo = {
+                    title: cacheManager.get('song') || 'Unknown',
+                    artist: cacheManager.get('artist') || 'Unknown',
+                    album: cacheManager.get('album') || 'Unknown'
+                };
+                
+                // Make sure song info is updated too
+                window.songDisplayRenderer.updateSongInfo(currentSongInfo);
+                
+                // Update all song display instances
+                updateCustomSongDisplay();
+            }
+            
+            // If this is dial settings, update marquee settings
+            if (payload.actionType === 'dial' && payload.settings.marquee) {
+                console.debug('[DEBUG] [Marquee] Updating marquee settings from dial');
+                
+                // Clear and restart marquee with new settings if we have active contexts
+                if (window.contexts.ciderPlaybackAction && window.contexts.ciderPlaybackAction.length > 0) {
+                    const currentSong = cacheManager.get('song');
+                    const currentArtist = cacheManager.get('artist');
+                    
+                    if (currentSong) {
+                        clearMarquee();
+                        const fullTitle = `${currentSong} - ${currentArtist || ''}`;
+                        startMarquee(window.contexts.ciderPlaybackAction, fullTitle);
+                    }
+                }
+            }
+        }
+        
+        // Handle the 'globalSettingsChanged' event to immediately update global settings
+        if (payload.action === 'globalSettingsChanged' && payload.settings) {
+            console.debug(`[DEBUG] [Settings] Received globalSettingsChanged notification:`, payload.settings);
+            updateSettings(payload.settings);
+        }
+    });
 });
 
 // ==========================================================================
@@ -473,26 +676,53 @@ async function setData({ state, attributes }) {
     const artistName = attributes.artistName;
     const albumName = attributes.albumName;
 
-    let logMessage = "[DEBUG] [Playback] ";
-
-    if (cacheManager.checkAndUpdate('artwork', artwork) && artwork) {
+    let logMessage = "[DEBUG] [Playback] ";    if (cacheManager.checkAndUpdate('artwork', artwork) && artwork) {
         getBase64Image(artwork).then(art64 => {
             window.contexts.albumArtAction?.forEach(context => setImage(context, art64, 0));
             if (window.contexts.ciderPlaybackAction[0]) {
-                $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "icon1": art64 });
+                // Check if user wants to show artwork on dial or use default Cider logo
+                const showArtworkOnDial = window.ciderDeckSettings?.dial?.showArtworkOnDial ?? true;
+                if (showArtworkOnDial) {
+                    $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "icon1": art64 });
+                } else {
+                    // Use Cider logo instead
+                    $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "icon1": "actions/assets/buttons/media-playlist" });
+                }
             }
         });
         logMessage += `Updated artwork: ${artwork}; `;
     }    if (cacheManager.checkAndUpdate('song', songName)) {
-        window.contexts.songNameAction?.forEach(context => setTitle(context, songName, 0));
+        // Update fullTitle for Stream Deck+ display
         const fullTitle = `${songName} - ${albumName}`;
+        
+        // Initialize the song renderer if it hasn't been yet
+        if (!window.songDisplayRenderer) {
+            console.debug('[DEBUG] [SongDisplay] Initializing song display renderer on data update');
+            window.songDisplayRenderer = new SongDisplayRenderer();
+        }
+        
+        // Update song info in the custom renderer
+        window.songDisplayRenderer.updateSongInfo({
+            title: songName,
+            artist: artistName,
+            album: albumName
+        });
+          // Handle Stream Deck+ marquee display
         clearMarquee();
-        if (marqueeEnabled && fullTitle.length > DISPLAY_LENGTH && window.contexts.ciderPlaybackAction[0]) {
+        const marqueeSettings = window.ciderDeckSettings?.dial?.marquee || {};
+        const isMarqueeEnabled = marqueeSettings.enabled ?? true;
+        const displayLength = marqueeSettings.length ?? 15;
+        
+        if (isMarqueeEnabled && fullTitle.length > displayLength && window.contexts.ciderPlaybackAction[0]) {
           const allContexts = [window.contexts.ciderPlaybackAction[0]];
           startMarquee(allContexts, fullTitle);
-        } else {
+        } else if (window.contexts.ciderPlaybackAction[0]) {
           $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "title": fullTitle });
         }
+        
+        // Update custom rendered song display for regular Stream Deck
+        updateCustomSongDisplay();
+        
         logMessage += `Updated song: ${songName}; Artist: ${artistName}; Album: ${albumName}; `;
     }
 
@@ -624,11 +854,11 @@ async function handleVolumeChange(action, context, direction, payload) {
     if (isChangingVolume) return;
     isChangingVolume = true;
 
-    try {
-        let { volume: currentVolume } = await comRPC("GET", "volume");
+    try {        let { volume: currentVolume } = await comRPC("GET", "volume");
         let currentVolumePercent = Math.round(currentVolume * 100);
 
-        const globalVolumeStep = window.volumeStep;
+        // Get volume step from the hierarchical settings structure
+        const volumeStep = window.ciderDeckSettings?.dial?.volumeStep ?? 1;
 
         let newVolume;
 
@@ -641,16 +871,16 @@ async function handleVolumeChange(action, context, direction, payload) {
             newVolume = isMuted ? 0 : previousVolume;
         } else if (direction === 'up' || direction === 'down') {
             newVolume = direction === 'up' 
-                ? Math.min(currentVolume + globalVolumeStep / 100, 1) 
-                : Math.max(currentVolume - globalVolumeStep / 100, 0);
+                ? Math.min(currentVolume + volumeStep / 100, 1) 
+                : Math.max(currentVolume - volumeStep / 100, 0);
         } else if (payload && payload.ticks !== undefined) {
-            newVolume = Math.max(0, Math.min(1, currentVolume + (payload.ticks * globalVolumeStep / 100)));
+            newVolume = Math.max(0, Math.min(1, currentVolume + (payload.ticks * volumeStep / 100)));
         }
 
         if (newVolume !== undefined) {
             let newVolumePercent = Math.round(newVolume * 100);
             
-            if (Math.abs(newVolumePercent - currentVolumePercent) < globalVolumeStep / 2) {
+            if (Math.abs(newVolumePercent - currentVolumePercent) < volumeStep / 2) {
                 return;
             }
 
@@ -830,6 +1060,11 @@ function startMarquee(contexts, text) {
   clearMarquee();
   currentMarqueeText = text;
   
+  // Get marquee settings from the hierarchical structure
+  const marqueeSettings = window.ciderDeckSettings?.dial?.marquee || {};
+  const marqueeSpeed = marqueeSettings.speed ?? 200;
+  const pauseDuration = marqueeSettings.delay ?? 2000;
+  
   // Update display for all contexts
   updateMarqueeForAllContexts(contexts);
   
@@ -837,13 +1072,13 @@ function startMarquee(contexts, text) {
       isScrolling = true;
       marqueeInterval = setInterval(() => {
           const currentTime = Date.now();
-          if (isScrolling && (currentTime - lastMarqueeUpdateTime) >= MARQUEE_SPEED) {
+          if (isScrolling && (currentTime - lastMarqueeUpdateTime) >= marqueeSpeed) {
               marqueePosition += MARQUEE_STEP;
               updateMarqueeForAllContexts(contexts);
               lastMarqueeUpdateTime = currentTime;
           }
-      }, Math.max(MARQUEE_SPEED / 2, 16)); // Run the interval more frequently, but update based on time
-  }, PAUSE_DURATION);
+      }, Math.max(marqueeSpeed / 2, 16)); // Run the interval more frequently, but update based on time
+  }, pauseDuration);
 }
 
 function updateMarqueeForAllContexts(contexts) {
@@ -853,23 +1088,94 @@ function updateMarqueeForAllContexts(contexts) {
 function updateMarqueeDisplay(context) {
   const totalTextLength = currentMarqueeText.length;
   
-  if (marqueePosition >= totalTextLength) {
-      isScrolling = false;
-      marqueePosition = 0;
-      updateMarqueeDisplay(context); // Display the start immediately
-      setTimeout(() => {
-          isScrolling = true;
-          lastMarqueeUpdateTime = Date.now(); // Reset the last update time
-      }, PAUSE_DURATION);
-      return;
+  // Get display length from settings
+  const marqueeSettings = window.ciderDeckSettings?.dial?.marquee || {};
+  const displayLength = marqueeSettings.length ?? 15;
+  
+  // For continuous scrolling, we need to handle wrapping properly
+  if (totalTextLength > displayLength) {
+    // Create a continuous scrolling effect by appending the beginning of text to the end
+    const paddedText = currentMarqueeText + " - " + currentMarqueeText.substring(0, displayLength);
+    
+    // Reset position if it exceeds the original text length (plus the separator)
+    if (marqueePosition >= totalTextLength + 3) {
+        marqueePosition = 0;
+        // No need to pause here for continuous scrolling
+    }
+    
+    let visibleText = paddedText.substring(marqueePosition, marqueePosition + displayLength);
+    
+    $SD.setFeedback(context, { "title": visibleText });
+  } else {
+    // If text is shorter than display length, just center it
+    $SD.setFeedback(context, { "title": currentMarqueeText });
   }
-  
-  let visibleText = currentMarqueeText.substring(marqueePosition, marqueePosition + DISPLAY_LENGTH);
-  
-  // Pad with spaces if we're near the end to avoid text wrapping
-  if (visibleText.length < DISPLAY_LENGTH) {
-      visibleText = visibleText.padEnd(DISPLAY_LENGTH, ' ');
-  }
-  
-  $SD.setFeedback(context, { "title": visibleText });
+}
+
+// ==========================================================================
+//  Custom Song Display Functions
+// ==========================================================================
+
+/**
+ * Updates the custom rendered song display on Stream Deck keys
+ */
+function updateCustomSongDisplay() {
+    console.debug("[DEBUG] [SongDisplay] Updating custom song display");
+    
+    if (!window.contexts.songNameAction || window.contexts.songNameAction.length === 0) {
+        console.debug("[DEBUG] [SongDisplay] No song name contexts available");
+        return; // No song name action contexts available
+    }
+    
+    // Check if the renderer exists
+    if (!window.songDisplayRenderer) {
+        console.error("[ERROR] [SongDisplay] Song display renderer is not initialized!");
+        window.songDisplayRenderer = new SongDisplayRenderer();
+    }
+      // Get settings for the renderer if available
+    const globalSongDisplaySettings = window.ciderDeckSettings?.songDisplay || {};
+    const localDisplaySettings = cacheManager.get('songDisplaySettings') || {};
+    
+    // Merge global and local settings, giving priority to local settings
+    const mergedSettings = {...globalSongDisplaySettings, ...localDisplaySettings};
+    
+    // Update renderer settings with merged settings
+    if (Object.keys(mergedSettings).length > 0) {
+        console.debug("[DEBUG] [SongDisplay] Applying merged settings to renderer:", mergedSettings);
+        window.songDisplayRenderer.updateSettings(mergedSettings);
+    }
+    
+    // Stop any existing animation
+    window.songDisplayRenderer.stopMarqueeAnimation();
+    
+    console.debug("[DEBUG] [SongDisplay] Marquee enabled:", window.songDisplayRenderer.settings.marqueeEnabled);
+    
+    // Generate an initial static image to show while starting the animation
+    const initialImage = window.songDisplayRenderer.renderImage();
+    if (initialImage) {
+        window.contexts.songNameAction.forEach(context => {
+            console.debug("[DEBUG] [SongDisplay] Setting initial image on context");
+            setImage(context, initialImage, 0);
+        });
+    }
+    
+    // If marquee is enabled and we have text that might need scrolling
+    if (window.songDisplayRenderer.settings.marqueeEnabled) {
+        console.debug("[DEBUG] [SongDisplay] Starting marquee animation");
+        
+        // Give a short delay before starting the animation to ensure the UI is ready
+        setTimeout(() => {
+            window.songDisplayRenderer.startMarqueeAnimation((imageData) => {
+                if (!imageData) {
+                    console.error("[ERROR] [SongDisplay] Failed to generate marquee image");
+                    return;
+                }
+                
+                // Update all song name contexts with the rendered image
+                window.contexts.songNameAction.forEach(context => {
+                    setImage(context, imageData, 0);
+                });
+            });
+        }, 100);
+    }
 }
