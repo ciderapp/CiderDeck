@@ -389,8 +389,7 @@ Object.keys(actions).forEach(actionKey => {
         const payload = data.payload;
         
         if (!payload) return;
-        
-        // Handle the 'settingsChanged' event to immediately update specific component settings
+          // Handle the 'settingsChanged' event to immediately update specific component settings
         if (payload.action === 'settingsChanged' && payload.actionType) {
             console.debug(`[DEBUG] [Settings] Received settingsChanged notification for ${payload.actionType}:`, payload.settings);
             
@@ -402,7 +401,8 @@ Object.keys(actions).forEach(actionKey => {
             
             // Apply the settings update
             updateSettings(updatedSettings);
-              // If this is song display settings, update immediately
+            
+            // If this is song display settings, update immediately
             if (payload.actionType === 'songDisplay' && window.songDisplayRenderer) {
                 console.debug('[DEBUG] [SongDisplay] Applying hot-reloaded settings');
                 
@@ -411,8 +411,7 @@ Object.keys(actions).forEach(actionKey => {
                 
                 // Then make sure the renderer gets the latest settings
                 window.songDisplayRenderer.updateSettings(payload.settings);
-                
-                // Force a complete re-render with the new settings
+                  // Force a complete re-render with the new settings
                 const currentSongInfo = {
                     title: cacheManager.get('song') || 'Unknown',
                     artist: cacheManager.get('artist') || 'Unknown',
@@ -426,20 +425,49 @@ Object.keys(actions).forEach(actionKey => {
                 updateCustomSongDisplay();
             }
             
-            // If this is dial settings, update marquee settings
-            if (payload.actionType === 'dial' && payload.settings.marquee) {
-                console.debug('[DEBUG] [Marquee] Updating marquee settings from dial');
+            // If this is dial settings, handle hot reload properly
+            if (payload.actionType === 'dial' && window.contexts.ciderPlaybackAction && window.contexts.ciderPlaybackAction.length > 0) {
+                console.debug('[DEBUG] [Dial] Applying hot-reloaded dial settings');
                 
-                // Clear and restart marquee with new settings if we have active contexts
-                if (window.contexts.ciderPlaybackAction && window.contexts.ciderPlaybackAction.length > 0) {
-                    const currentSong = cacheManager.get('song');
-                    const currentArtist = cacheManager.get('artist');
+                // If artwork setting changed, we need to update the dial display
+                const artwork = cacheManager.get('artwork');
+                if (artwork) {
+                    getBase64Image(artwork).then(art64 => {
+                        const showArtworkOnDial = payload.settings.showArtworkOnDial ?? true;
+                        if (window.contexts.ciderPlaybackAction[0]) {
+                            // Update the icon based on the new setting
+                            if (showArtworkOnDial) {
+                                $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "icon1": art64 });
+                            } else {
+                                $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "icon1": "actions/assets/buttons/media-playlist" });
+                            }
+                        }
+                    });
+                }
+                
+                // Also update current song title display if needed
+                const currentSong = cacheManager.get('song');
+                const currentAlbum = cacheManager.get('album');
+                
+                if (currentSong) {
+                    const fullTitle = `${currentSong} - ${currentAlbum || ''}`;
+                    clearMarquee();
                     
-                    if (currentSong) {
-                        clearMarquee();
-                        const fullTitle = `${currentSong} - ${currentArtist || ''}`;
-                        startMarquee(window.contexts.ciderPlaybackAction, fullTitle);
+                    const marqueeSettings = payload.settings.marquee || {};
+                    const isMarqueeEnabled = marqueeSettings.enabled ?? true;
+                    const displayLength = marqueeSettings.length ?? 15;
+                    
+                    if (isMarqueeEnabled && fullTitle.length > displayLength && window.contexts.ciderPlaybackAction[0]) {
+                        const allContexts = [window.contexts.ciderPlaybackAction[0]];
+                        startMarquee(allContexts, fullTitle);
+                    } else if (window.contexts.ciderPlaybackAction[0]) {
+                        $SD.setFeedback(window.contexts.ciderPlaybackAction[0], { "title": fullTitle });
                     }
+                }
+                
+                // Update volume display if needed
+                if (window.contexts.ciderPlaybackAction[0]) {
+                    initializeVolumeDisplay(actions.ciderPlaybackAction, window.contexts.ciderPlaybackAction[0]);
                 }
             }
         }
