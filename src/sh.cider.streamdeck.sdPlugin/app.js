@@ -60,8 +60,8 @@ const offlineStates = {
 };
 
 // Global Configuration
-let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false;
-let lastMarqueeUpdateTime = 0;
+let marqueeInterval, marqueePosition = 0, currentMarqueeText = '', isScrolling = false, lastMarqueeUpdateTime = 0;
+const MARQUEE_STEP = 1;
 let currentRepeatMode = 0; // 0: off, 1: repeat one, 2: repeat all, 3: disabled
 let currentShuffleMode = 0; // 0: off, 1: on, 2: disabled
 
