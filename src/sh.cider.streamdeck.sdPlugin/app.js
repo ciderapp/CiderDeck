@@ -257,6 +257,9 @@ const defaultSettings = {
     playback: {
         alwaysGoToPrevious: false
     },
+    favorite: {
+        alsoAddToLibrary: false
+    },
     dial: {
         rotationAction: 'volume',
         volumeStep: 1,
@@ -878,6 +881,16 @@ async function setRating(ratingValue) {
 
         cacheManager.set('rating', ratingValue);
         console.debug("[DEBUG] [Rating] Updated rating to:", ratingValue);
+        
+        // If this is a "like" (rating = 1) and the alsoAddToLibrary setting is enabled,
+        // also add the song to the library
+        if (ratingValue === 1) {
+            const alsoAddToLibrary = window.ciderDeckSettings?.favorite?.alsoAddToLibrary ?? false;
+            if (alsoAddToLibrary && !cacheManager.get('addedToLibrary')) {
+                console.debug("[DEBUG] [Rating] Also adding song to library due to favorite setting");
+                await addToLibrary();
+            }
+        }
     }
 }
 

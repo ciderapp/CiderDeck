@@ -271,8 +271,7 @@
 			"Tooltip": "Provides a tile to dislike the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.dislike",
 			"PropertyInspectorPath": "actions/inspectors/inspector.html"
-		},
-		{
+		},		{
 			"Icon": "actions/assets/app/star",
 			"Name": "Favorite",
 			"Controllers": ["Keypad"],
@@ -296,7 +295,7 @@
 			],
 			"Tooltip": "Provides a tile to like the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.like",
-			"PropertyInspectorPath": "actions/inspectors/inspector.html"
+			"PropertyInspectorPath": "actions/inspectors/favorite-inspector.html"
 		},
 		{
 			"Icon": "actions/assets/app/media-next",

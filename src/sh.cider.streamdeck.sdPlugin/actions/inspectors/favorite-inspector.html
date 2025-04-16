@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Favorite Button Settings</title>
+    <link rel="stylesheet" href="../../libs/css/sdpi.css">
+    <style>
+        .settings-tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 5px;
+            text-align: center;
+            background: #2D2D2D;
+            cursor: pointer;
+            border: 1px solid #3D3D3D;
+        }
+        .tab-button.active {
+            background: #3D3D3D;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sdpi-heading-info {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+            margin-bottom: 8px;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sdpi-wrapper">
+        <div class="sdpi-heading">Favorite Button Settings</div>
+        <div class="sdpi-description">Customize how the favorite button behaves</div>
+
+        <div class="settings-tabs">
+            <div class="tab-button active" data-tab="behavior-settings">Behavior</div>
+        </div>
+
+        <form id="favorite-settings">
+            <!-- Behavior Settings Tab -->
+            <div id="behavior-settings" class="tab-content active">
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Also Add to Library</div>
+                    <div class="sdpi-item-value">
+                        <input id="alsoAddToLibrary" type="checkbox" data-setting="alsoAddToLibrary" class="sdProperty sdCheckbox">
+                        <label for="alsoAddToLibrary"><span></span></label>
+                    </div>
+                </div>
+
+                <div class="sdpi-heading-info">
+                    <strong>When enabled:</strong> Pressing the Favorite button will both mark the song as a favorite and add it to your library.<br>
+                    <strong>When disabled:</strong> Pressing the Favorite button will only mark the song as a favorite.
+                </div>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="save-settings" class="sdpi-item-value">Save Settings</button>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="reset-settings" class="sdpi-item-value">Reset to Defaults</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../../libs/js/constants.js"></script>
+    <script src="../../libs/js/utils.js"></script>
+    <script src="../../libs/js/events.js"></script>
+    <script src="../../libs/js/api.js"></script>
+    <script src="../../libs/js/property-inspector.js"></script>
+    <script src="../../libs/js/dynamic-styles.js"></script>
+    <script src="../../libs/js/base-inspector.js"></script>
+    <script src="favorite-inspector.js"></script>
+</body>
+</html>
