@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Previous Track Settings</title>
+    <link rel="stylesheet" href="../../libs/css/sdpi.css">
+    <style>
+        .settings-tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 5px;
+            text-align: center;
+            background: #2D2D2D;
+            cursor: pointer;
+            border: 1px solid #3D3D3D;
+        }
+        .tab-button.active {
+            background: #3D3D3D;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sdpi-heading-info {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+            margin-bottom: 8px;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sdpi-wrapper">
+        <div class="sdpi-heading">Previous Track Settings</div>
+        <div class="sdpi-description">Customize how the previous track button behaves</div>
+
+        <div class="settings-tabs">
+            <div class="tab-button active" data-tab="behavior-settings">Behavior</div>
+        </div>
+
+        <form id="previous-track-settings">
+            <!-- Behavior Settings Tab -->
+            <div id="behavior-settings" class="tab-content active">
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Always Go to Previous</div>
+                    <div class="sdpi-item-value">
+                        <input id="alwaysGoToPrevious" type="checkbox" data-setting="alwaysGoToPrevious" class="sdProperty sdCheckbox">
+                        <label for="alwaysGoToPrevious"><span></span></label>
+                    </div>
+                </div>
+
+                <div class="sdpi-heading-info">
+                    <strong>When enabled:</strong> Always goes to the previous track.<br>
+                    <strong>When disabled:</strong> Seeks to the start of current track if pressed within the first 10 seconds, otherwise goes to the previous track.
+                </div>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="save-settings" class="sdpi-item-value">Save Settings</button>
+            </div>
+
+            <div class="sdpi-item">
+                <button id="reset-settings" class="sdpi-item-value">Reset to Defaults</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../../libs/js/constants.js"></script>
+    <script src="../../libs/js/utils.js"></script>
+    <script src="../../libs/js/events.js"></script>
+    <script src="../../libs/js/api.js"></script>
+    <script src="../../libs/js/property-inspector.js"></script>
+    <script src="../../libs/js/dynamic-styles.js"></script>
+    <script src="../../libs/js/base-inspector.js"></script>
+    <script src="previous-track-inspector.js"></script>
+</body>
+</html>

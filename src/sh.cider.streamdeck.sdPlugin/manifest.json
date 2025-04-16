@@ -342,7 +342,7 @@
 			],
 			"Tooltip": "Provides a tile to play the previous song in Cider.",
 			"UUID": "sh.cider.streamdeck.previous",
-			"PropertyInspectorPath": "actions/inspectors/inspector.html"
+			"PropertyInspectorPath": "actions/inspectors/previous-track-inspector.html"
 		},
 		{
 			"Icon": "actions/assets/app/icon",

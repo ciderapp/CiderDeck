@@ -254,6 +254,9 @@ const defaultSettings = {
             rpcKey: null
         }
     },
+    playback: {
+        alwaysGoToPrevious: false
+    },
     dial: {
         rotationAction: 'volume',
         volumeStep: 1,
@@ -799,16 +802,24 @@ function updateShuffleMode(mode) {
 }
 
 async function goBack() {
-    // Go to previous track, but first set the track position to 0 to see if a user is trying to just go back to the start, if not (within 10 seconds of current track) then go back to the previous track.
-    // This is a bit of a hack, but it works for now.
-
-    if (window.currentPlaybackTime > 10) {
-        console.debug("[DEBUG] [Playback] Going to previous track");
+    // Check the setting that determines if we should always go to the previous track
+    const alwaysGoToPrevious = window.ciderDeckSettings?.playback?.alwaysGoToPrevious ?? false;
+    
+    if (alwaysGoToPrevious) {
+        // If the setting is enabled, always go to the previous track
+        console.debug("[DEBUG] [Playback] Always go to previous track setting enabled, going to previous track");
         await comRPC("POST", "previous");
     } else {
-        console.log("Current Time", window.currentPlaybackTime);
-        console.debug("[DEBUG] [Playback] Seeking to start of current track");
-        await comRPC("POST", "seek", true, { position: 0 });
+        // Otherwise, use the default behavior:
+        // If within the first 10 seconds of the track, seek to the start
+        // If later in the track, go to the previous track
+        if (window.currentPlaybackTime > 10) {
+            console.debug("[DEBUG] [Playback] Going to previous track");
+            await comRPC("POST", "previous");
+        } else {
+            console.debug("[DEBUG] [Playback] Seeking to start of current track");
+            await comRPC("POST", "seek", true, { position: 0 });
+        }
     }
 }
 
