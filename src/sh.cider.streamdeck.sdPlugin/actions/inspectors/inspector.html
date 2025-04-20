@@ -5,8 +5,10 @@
     <title>CiderDeck Settings</title>
     <link rel="stylesheet" href="../../libs/css/sdpi.css">
 </head>
-<body>    <div class="sdpi-wrapper">
-        <div class="sdpi-heading">CiderDeck Settings</div>
+<body>    
+    <div class="sdpi-wrapper">
+        <div class="sdpi-heading">No customization is available for this action.</div>
+        <div class="sdpi-heading">Cider Config</div>
         <div class="sdpi-description">Setup your experience!</div>
 
         <form id="property-inspector">
@@ -15,7 +17,7 @@
                 <div class="sdpi-item-group">
                     <div class="sdpi-item">
                         <div class="sdpi-item-label">RPC Key</div>
-                        <input id="authKey" type="password" data-setting="authKey" class="sdProperty sdpi-item-value" placeholder="Enter your RPC Key" required>
+                        <input id="authKey" type="password" data-global-setting="global.authorization.rpcKey" class="sdProperty sdpi-item-value" placeholder="Enter your RPC Key" required>
                     </div>
                 </div>
             </div>
@@ -36,6 +38,7 @@
     <script src="../../libs/js/api.js"></script>
     <script src="../../libs/js/property-inspector.js"></script>
     <script src="../../libs/js/dynamic-styles.js"></script>
+    <script src="../../libs/js/base-inspector.js"></script>
     <script src="inspector.js"></script>
 </body>
 </html>

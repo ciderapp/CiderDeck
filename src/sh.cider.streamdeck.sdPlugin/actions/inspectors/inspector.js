@@ -1,7 +1,3 @@
-/// <reference path="../../libs/js/property-inspector.js" />
-/// <reference path="../../libs/js/utils.js" />
-/// <reference path="../../libs/js/base-inspector.js" />
-
 // Create a temporary storage for unsaved settings
 let tempSettings = {};
 
@@ -96,11 +92,8 @@ function loadSettingsToUI() {
  * Save settings from the UI to Stream Deck
  */
 function saveSettings() {
-    // Collect the RPC key from the input
-    collectFormValues();
-    
-    // Apply temp settings to actual settings in baseInspector
-    baseInspector.globalSettings = JSON.parse(JSON.stringify(tempSettings));
+    // We no longer need to collect values manually because the base-inspector
+    // will look for data-global-setting attributes and do it for us
     
     // Send the settings to Stream Deck using baseInspector
     baseInspector.saveGlobalSettings();
@@ -113,7 +106,7 @@ function saveSettings() {
         button.innerText = originalText;
     }, 2000);
     
-    console.log('Global settings saved:', tempSettings);
+    console.log('Global settings saved:', baseInspector.globalSettings);
 }
 
 /**

@@ -968,6 +968,57 @@ async function initializeVolumeDisplay(action, context) {
     }
 }
 
+// =========================================================================
+//  Apple Music Mix Linker Functions
+// =========================================================================
+
+async function playStation(stationType) {
+    // This function will play a station selected by the user via a property inspector, this could be either Discovery, Personal, or Focus stations.
+}
+
+async function playMix(mixId) {
+    // This function will play a mix selected by the user via a property inspector, New Music Mix, Friends Mix, Get Up Mix, Chill Mix, Heavy Rotation Mix, or Favorites Mix.
+}
+
+// =========================================================================
+//  Playlist Management Functions
+// =========================================================================
+
+async function findBindedKeys(actionKeys, configStore) {
+    // This function simply fetches all the action keys and looks for any that may be tied to playlists on their IDs.
+    // Due to how the Stream Deck plugins work we will need to use action specific configs for this. (TBD.)
+}
+
+async function bindPlaylist(playlistId, actionKey) {
+    // This function binds the playlistId with the Action Key, providing for a streamlined experience; It will use the icon from the playlist as part of its composited icon alongside the title, implementation similar to song display rendering.
+    // This will be set via a property inspector, with a playlist list being generated with another function and saved for the runtime.
+}
+
+async function addToPlaylist(playlistId) {
+    try {
+        // Run Apple Music request, via RPC; First check for duplicates, if so show alt warn state on key (icon 3), on press again add to playlist anyways.
+        // If not, add to playlist and show success state (icon 2).
+    } catch (error) {
+        console.info("Error adding to playlist:", error);
+    }
+}
+
+async function generatePlaylistIcon(playlistId) {
+    // This function will generate a playlist icon to be used in addition to a binded playlist action key, and will trigger another song display based library.
+}
+
+async function queuePlaylist(playlistId, shouldShuffle) {
+    // This function will take the binded action key playlist Id and queue it up immediately, morphing the playlist icon to show a play button.
+}
+
+async function fetchPlaylist(playlistId) {
+    // This function saves the current state of a playlist into cache for easy and fast manipulation without API spam, modifications will be done via the cache stack once implemented
+}
+
+async function checkforDuplicate(playlistId, songId) {
+    // This function checks if the song is already in the playlist, and returns a boolean.
+}
+
 // ==========================================================================
 //  Utility Functions
 // ==========================================================================

@@ -42,17 +42,17 @@ class BaseInspector {
                 showAlbum: false,
                 maxLines: 2,
                 lineHeight: 1.2,
-                alignment: 'center',
-                showIcons: false,
+                alignment: 'bottom',
+                showIcons: true,
                 useShadow: true,
-                iconSize: 24,
+                iconSize: 28,
                 textStyle: 'normal',
                 verticalPosition: 'center',
                 lineSpacing: 13,
                 textPrefix: '',
                 customFormat: '',
                 marquee: {
-                    enabled: true,
+                    enabled: false,
                     speed: 40,
                     pause: 2000
                 }
