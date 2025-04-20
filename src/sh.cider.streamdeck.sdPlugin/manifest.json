@@ -1,12 +1,12 @@
 {
 	"Author": "Cider Collective",
 	"CodePath": "app.html",
-	"Description": "The official plugin for managing your media through Cider.",
+	"Description": "CiderDeck is the official plugin from the Cider Collective team, built to integrate your Cider app (v3.0.0+) perfectly with your Stream Deck. Stop switching apps and stay focused on your stream, game, or work!",
 	"Name": "CiderDeck",
 	"SDKVersion": 2,
 	"Icon": "actions/assets/app/icon",
 	"URL": "https://cider.sh",
-	"Version": "3.1.0",
+	"Version": "3.2.0",
 	"Software": {
 		"MinimumVersion": "5.0"
 	},

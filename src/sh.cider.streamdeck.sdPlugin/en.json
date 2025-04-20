@@ -1,5 +1,5 @@
 {
-  "Description": "A plugin to provide playback controls and data from your Stream Deck", 
+  "Description": "CiderDeck is the official plugin from the Cider Collective team, built to integrate your Cider app (v3.0.0+) perfectly with your Stream Deck. Stop switching apps and stay focused on your stream, game, or work!", 
   "Name": "CiderDeck", 
   "Category": "Cider", 
   "sh.cider.streamdeck.playback": {
