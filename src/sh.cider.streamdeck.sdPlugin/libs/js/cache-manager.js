@@ -87,3 +87,6 @@ class CacheManager {
 
 // Create a singleton instance
 const cacheManager = new CacheManager();
+
+// Make it available globally
+window.cacheManager = cacheManager;

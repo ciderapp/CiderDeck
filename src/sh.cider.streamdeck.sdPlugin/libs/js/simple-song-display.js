@@ -5,12 +5,31 @@
 //  that works reliably with the Stream Deck SDK.
 // ==========================================================================
 
+// Create module-specific logger
+const rendererLogger = window.CiderDeckLogger?.createLogger('SongRenderer') || {
+    info: console.log,
+    debug: console.debug,
+    warn: console.warn,
+    error: console.error,
+    category: () => ({
+        info: console.log,
+        debug: console.debug,
+        warn: console.warn,
+        error: console.error
+    })
+};
+
+// Create subcategory loggers
+const canvasLogger = rendererLogger.category('Canvas');
+const animationLogger = rendererLogger.category('Animation');
+const iconLogger = rendererLogger.category('Icons');
+
 /**
  * SongDisplayRenderer - Creates images with song information for Stream Deck keys
  */
 class SongDisplayRenderer {
     constructor() {
-        console.debug("[DEBUG] [SongDisplay] Initializing simple song renderer");
+        rendererLogger.debug("Initializing simple song renderer");
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         
@@ -60,7 +79,7 @@ class SongDisplayRenderer {
      * Updates song information
      */
     updateSongInfo(songInfo) {
-        console.debug("[DEBUG] [SongDisplay] Updating song info:", songInfo);
+        rendererLogger.debug(`Updating song info: ${JSON.stringify(songInfo)}`);
         this.songInfo = {
             title: songInfo.title || '',
             artist: songInfo.artist || '',
@@ -77,7 +96,7 @@ class SongDisplayRenderer {
      * Updates display settings
      */
     updateSettings(settings) {
-        console.debug("[DEBUG] [SongDisplay] Updating settings:", settings);
+        rendererLogger.debug(`Updating settings: ${JSON.stringify(settings)}`);
         this.settings = {
             ...this.settings,
             ...settings
@@ -92,17 +111,20 @@ class SongDisplayRenderer {
     async loadIcon(iconPath) {
         // Check if icon is already cached
         if (this.iconCache[iconPath]) {
+            iconLogger.debug(`Using cached icon: ${iconPath}`);
             return this.iconCache[iconPath];
         }
         
+        iconLogger.debug(`Loading icon: ${iconPath}`);
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
+                iconLogger.debug(`Icon loaded successfully: ${iconPath}`);
                 this.iconCache[iconPath] = img;
                 resolve(img);
             };
             img.onerror = (err) => {
-                console.error(`[ERROR] [SongDisplay] Failed to load icon: ${iconPath}`, err);
+                iconLogger.error(`Failed to load icon: ${iconPath} - ${err}`);
                 reject(err);
             };
             img.src = iconPath;
@@ -114,7 +136,7 @@ class SongDisplayRenderer {
      * @returns {string} Data URL of the rendered image
      */
     renderImage() {
-        console.debug("[DEBUG] [SongDisplay] Rendering image");
+        canvasLogger.debug("Rendering image");
         
         const { ctx, canvas, settings, songInfo } = this;
         const { 
@@ -232,10 +254,10 @@ class SongDisplayRenderer {
         
         try {
             const imageData = canvas.toDataURL('image/png');
-            console.debug("[DEBUG] [SongDisplay] Image rendered successfully");
+            canvasLogger.debug("Image rendered successfully");
             return imageData;
         } catch (error) {
-            console.error("[ERROR] [SongDisplay] Failed to convert canvas to image:", error);
+            canvasLogger.error(`Failed to convert canvas to image: ${error}`);
             return null;
         }
     }
@@ -245,7 +267,7 @@ class SongDisplayRenderer {
      * @returns {string} Data URL of the rendered image
      */
     renderImageWithMarquee() {
-        console.debug("[DEBUG] [SongDisplay] Rendering marquee frame");
+        animationLogger.debug("Rendering marquee frame");
         
         // If marquee is disabled, just use standard rendering
         if (!this.settings.marqueeEnabled) {
@@ -370,7 +392,7 @@ class SongDisplayRenderer {
             const imageData = canvas.toDataURL('image/png');
             return imageData;
         } catch (error) {
-            console.error("[ERROR] [SongDisplay] Failed to convert canvas to image:", error);
+            animationLogger.error(`Failed to convert canvas to image: ${error}`);
             return this.renderImage(); // Fallback to normal rendering
         }
     }
@@ -386,7 +408,7 @@ class SongDisplayRenderer {
         const { ctx, canvas, marqueePosition } = this;
         
         // Debug the scroll position
-        console.debug("[DEBUG] [SongDisplay] Marquee position:", marqueePosition, "Text width:", textWidth);
+        animationLogger.debug(`Marquee position: ${marqueePosition}, Text width: ${textWidth}`);
         
         // Use clipping to show only part of the text
         ctx.save();
@@ -435,7 +457,7 @@ class SongDisplayRenderer {
             this.stopMarqueeAnimation();
         }
         
-        console.debug("[DEBUG] [SongDisplay] Starting marquee animation");
+        animationLogger.info("Starting marquee animation");
         
         // Reset animation state
         this.marqueePosition = 0;
@@ -480,10 +502,10 @@ class SongDisplayRenderer {
                 if (image && callback && typeof callback === 'function') {
                     callback(image);
                 } else if (!image) {
-                    console.error("[ERROR] [SongDisplay] Failed to generate marquee image");
+                    animationLogger.error("Failed to generate marquee image");
                 }
             } catch (error) {
-                console.error("[ERROR] [SongDisplay] Error in marquee animation:", error);
+                animationLogger.error(`Error in marquee animation: ${error}`);
                 const fallbackImage = this.renderImage();
                 if (fallbackImage && callback && typeof callback === 'function') {
                     callback(fallbackImage);
@@ -517,7 +539,7 @@ class SongDisplayRenderer {
      * @param {number} size Icon size
      */
     drawMusicIcon(x, y, size) {
-        console.debug("[DEBUG] [SongDisplay] Drawing music icon");
+        iconLogger.debug(`Drawing music icon at (${x}, ${y}) with size ${size}`);
         
         const { ctx } = this;
         
