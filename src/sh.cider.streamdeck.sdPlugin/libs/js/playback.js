@@ -22,6 +22,18 @@ const repeatLogger = logger.category('Repeat');
 const shuffleLogger = logger.category('Shuffle');
 const artworkLogger = window.CiderDeckLogger?.createLogger('Artwork') || logger;
 
+// Debounce function for logging
+const debounce = (func, wait) => {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+};
+
+// Debounced version of the logger.info method (200ms)
+const debouncedPlaybackInfo = debounce(logger.info.bind(logger), 200);
+
 // Playback state tracking
 let currentRepeatMode = 0; // 0: off, 1: repeat one, 2: repeat all, 3: disabled
 let currentShuffleMode = 0; // 0: off, 1: on, 2: disabled
@@ -107,7 +119,7 @@ async function setData({ state, attributes }) {
     const artistName = attributes.artistName;
     const albumName = attributes.albumName;
 
-    logger.info(`Processing: "${songName}" by ${artistName} from ${albumName}`);
+    debouncedPlaybackInfo(`Processing: "${songName}" by ${artistName} from ${albumName}`);
     logger.debug(`Artwork URL: ${artwork}`);
     
     let logMessage = "[DEBUG] [Playback] ";
@@ -148,8 +160,20 @@ async function setData({ state, attributes }) {
     }
     
     if (cacheManager.checkAndUpdate('song', songName)) {
-        // Update fullTitle for Stream Deck+ display
-        const fullTitle = `${songName} - ${albumName}`;
+        // Get dial and song display settings
+        const dialSettings = window.ciderDeckSettings?.dial || {};
+        
+        // Format title according to custom format if available
+        const songInfo = {
+            title: songName,
+            artist: artistName,
+            album: albumName
+        };
+        
+        // Format the text using the custom format from dial settings (or fallback to default)
+        const customFormat = dialSettings.customFormat || '{song} - {album}';
+        const textPrefix = dialSettings.textPrefix || '';
+        const fullTitle = textPrefix + formatSongInfo(customFormat, songInfo);
         
         // Initialize the song renderer if it hasn't been yet
         if (!window.songDisplayRenderer) {
@@ -350,6 +374,35 @@ async function updatePlaybackModes() {
 }
 
 /**
+ * Formats song information according to a template
+ * Supports variables: {song}, {artist}, {album}, {duration}
+ * @param {string} template - The format template
+ * @param {Object} songInfo - Object containing song details
+ * @returns {string} Formatted text
+ */
+function formatSongInfo(template, songInfo) {
+    const formatLogger = logger.category('Format');
+    
+    // If no custom format is provided, use a default format
+    if (!template || template === '') {
+        formatLogger.debug("No template provided, using default format");
+        return `${songInfo.title || ''} - ${songInfo.album || ''}`;
+    }
+    
+    formatLogger.debug(`Formatting with template: "${template}"`);
+    
+    // Apply variable replacements
+    let formattedText = template
+        .replace(/\{song\}/gi, songInfo.title || '')
+        .replace(/\{artist\}/gi, songInfo.artist || '')
+        .replace(/\{album\}/gi, songInfo.album || '')
+        .replace(/\{duration\}/gi, songInfo.duration || '');
+    
+    formatLogger.debug(`Formatted result: "${formattedText}"`);
+    return formattedText;
+}
+
+/**
  * Updates playback time indicator on Stream Deck+
  * @param {number} time - Current playback time in seconds
  * @param {number} duration - Total track duration in seconds
@@ -388,6 +441,7 @@ window.CiderDeckPlayback = {
     goBack,
     updatePlaybackModes,
     setPlaybackTime,
+    formatSongInfo,
     getCurrentRepeatMode: () => currentRepeatMode,
     getCurrentShuffleMode: () => currentShuffleMode,
     setCurrentRepeatMode: (mode) => { currentRepeatMode = mode; },

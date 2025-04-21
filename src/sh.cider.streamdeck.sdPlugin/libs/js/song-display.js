@@ -18,9 +18,9 @@ const songDisplayLogger = window.CiderDeckLogger?.createLogger('SongDisplay') ||
 };
 
 // Create subcategory loggers
-const rendererLogger = songDisplayLogger.category('Renderer');
+const songRendererLogger = songDisplayLogger.category('Renderer');
 const settingsLogger = songDisplayLogger.category('Settings');
-const marqueeLogger = songDisplayLogger.category('Marquee');
+const songMarqueeLogger = songDisplayLogger.category('Marquee');
 
 /**
  * Updates the custom rendered song display on Stream Deck keys
@@ -75,22 +75,21 @@ function updateCustomSongDisplay() {
     
     // Stop any existing animation
     try {
-        marqueeLogger.info("Stopping any existing marquee animation");
+        songMarqueeLogger.info("Stopping any existing marquee animation");
         window.songDisplayRenderer.stopMarqueeAnimation();
     } catch (err) {
-        marqueeLogger.error(`Failed to stop marquee animation: ${err}`);
+        songMarqueeLogger.error(`Failed to stop marquee animation: ${err}`);
     }
     
     songDisplayLogger.info(`Marquee enabled: ${window.songDisplayRenderer.settings?.marqueeEnabled}`);
-    
-    // Generate an initial static image to show while starting the animation
+      // Generate an initial static image to show while starting the animation
     let initialImage;
     try {
-        rendererLogger.info("Generating initial static image");
+        songRendererLogger.info("Generating initial static image");
         initialImage = window.songDisplayRenderer.renderImage();
-        rendererLogger.info("Initial image generation successful");
+        songRendererLogger.info("Initial image generation successful");
     } catch (err) {
-        rendererLogger.error(`Failed to render image: ${err}`);
+        songRendererLogger.error(`Failed to render image: ${err}`);
     }
     
     if (initialImage) {
@@ -108,19 +107,19 @@ function updateCustomSongDisplay() {
     
     // If marquee is enabled and we have text that might need scrolling
     if (window.songDisplayRenderer.settings?.marqueeEnabled) {
-        marqueeLogger.info("Marquee animation is enabled, preparing to start");
+        songMarqueeLogger.info("Marquee animation is enabled, preparing to start");
         
         // Give a short delay before starting the animation to ensure the UI is ready
         setTimeout(() => {
-            marqueeLogger.info("Starting marquee animation after delay");
+            songMarqueeLogger.info("Starting marquee animation after delay");
             try {
                 window.songDisplayRenderer.startMarqueeAnimation((imageData) => {
                     if (!imageData) {
-                        marqueeLogger.error("Failed to generate marquee image");
+                        songMarqueeLogger.error("Failed to generate marquee image");
                         return;
                     }
                     
-                    marqueeLogger.debug("Received new marquee image frame");
+                    songMarqueeLogger.debug("Received new marquee image frame");
                     
                     // Update all song name contexts with the rendered image
                     window.contexts.songNameAction.forEach(context => {
@@ -132,9 +131,9 @@ function updateCustomSongDisplay() {
                         }
                     });
                 });
-                marqueeLogger.info("Marquee animation started successfully");
+                songMarqueeLogger.info("Marquee animation started successfully");
             } catch (err) {
-                marqueeLogger.error(`Failed to start marquee animation: ${err}`);
+                songMarqueeLogger.error(`Failed to start marquee animation: ${err}`);
             }
         }, 100);
     } else {

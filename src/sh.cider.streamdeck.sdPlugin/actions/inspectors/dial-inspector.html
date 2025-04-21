@@ -108,13 +108,39 @@
                         <span class="clickable" value="25">Long</span>
                     </div>
                 </div>
-                
-                <div class="sdpi-item" id="marquee-delay-container">
+                  <div class="sdpi-item" id="marquee-delay-container">
                     <div class="sdpi-item-label">Pause Duration</div>
                     <div class="sdpi-item-value">
                         <span class="clickable" value="1000">Short</span>
                         <input type="range" min="1000" max="5000" value="2000" data-setting="marquee.delay" id="marqueeDelay">
                         <span class="clickable" value="5000">Long</span>
+                    </div>
+                </div>
+
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Custom Format</div>
+                    <div class="sdpi-item-value">
+                        <input id="customFormat" type="text" data-setting="customFormat" placeholder="{song} - {album}" class="sdProperty">
+                    </div>
+                </div>
+                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Text Prefix</div>
+                    <div class="sdpi-item-value">
+                        <input id="textPrefix" type="text" data-setting="textPrefix" placeholder="" class="sdProperty">
+                    </div>
+                </div>
+                
+                <div class="sdpi-item">
+                    <div class="sdpi-item-label">Format Help</div>
+                    <div class="sdpi-item-value">
+                        <details>
+                            <summary>Available Variables</summary>
+                            <p><code>{song}</code> - Song title</p>
+                            <p><code>{artist}</code> - Artist name</p>
+                            <p><code>{album}</code> - Album name</p>
+                            <p><code>{duration}</code> - Track duration</p>
+                        </details>
                     </div>
                 </div>                  <div class="sdpi-item">
                     <div class="sdpi-item-label">Show Icons</div>

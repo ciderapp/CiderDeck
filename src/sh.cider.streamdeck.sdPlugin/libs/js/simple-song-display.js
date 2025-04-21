@@ -457,8 +457,6 @@ class SongDisplayRenderer {
             this.stopMarqueeAnimation();
         }
         
-        animationLogger.info("Starting marquee animation");
-        
         // Reset animation state
         this.marqueePosition = 0;
         this.lastRenderTime = 0;

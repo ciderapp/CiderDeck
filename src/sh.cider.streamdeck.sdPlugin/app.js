@@ -292,7 +292,9 @@ const defaultSettings = {
             delay: 2000
         },
         showIcons: true,
-        showArtworkOnDial: true
+        showArtworkOnDial: true,
+        customFormat: '{song} - {album}',
+        textPrefix: ''
     },
     songDisplay: {
         fontSize: 16,

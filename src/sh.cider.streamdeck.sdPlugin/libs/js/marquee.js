@@ -3,8 +3,11 @@
  * Handles scrolling text on Stream Deck+ displays
  */
 
-// Create module-specific logger
-const logger = window.CiderDeckLogger?.createLogger('Marquee') || {
+// Initialize CiderDeckMarquee namespace in the global window object
+window.CiderDeckMarquee = window.CiderDeckMarquee || {};
+
+// Create module-specific logger inside the namespace
+const marqueeLogger = window.CiderDeckLogger?.createLogger('Marquee') || {
     info: console.log,
     debug: console.debug,
     warn: console.warn,
@@ -17,7 +20,7 @@ const logger = window.CiderDeckLogger?.createLogger('Marquee') || {
     })
 };
 
-// Marquee state
+// Marquee state (module scoped variables)
 let marqueeInterval = null;
 let marqueePosition = 0;
 let currentMarqueeText = '';
@@ -30,7 +33,7 @@ const MARQUEE_STEP = 1;
  */
 function clearMarquee() {
     if (marqueeInterval) {
-        logger.debug("Clearing active marquee animation");
+        marqueeLogger.debug("Clearing active marquee animation");
         clearInterval(marqueeInterval);
         marqueeInterval = null;
     }
@@ -38,7 +41,7 @@ function clearMarquee() {
     currentMarqueeText = '';
     isScrolling = false;
     lastMarqueeUpdateTime = 0;
-    logger.debug("Marquee state reset");
+    marqueeLogger.debug("Marquee state reset");
 }
 
 /**
@@ -47,7 +50,7 @@ function clearMarquee() {
  * @param {string} text - Text to scroll
  */
 function startMarquee(contexts, text) {
-    logger.info(`Starting marquee for text: "${text}"`);
+    marqueeLogger.info(`Starting marquee for text: "${text}"`);
     clearMarquee();
     currentMarqueeText = text;
   
@@ -56,15 +59,15 @@ function startMarquee(contexts, text) {
     const marqueeSpeed = marqueeSettings.speed ?? 200;
     const pauseDuration = marqueeSettings.delay ?? 2000;
     
-    logger.debug(`Using settings - Speed: ${marqueeSpeed}ms, Delay: ${pauseDuration}ms`);
+    marqueeLogger.debug(`Using settings - Speed: ${marqueeSpeed}ms, Delay: ${pauseDuration}ms`);
   
     // Update display for all contexts
     updateMarqueeForAllContexts(contexts);
     
-    logger.debug("Initial marquee display set, scheduling scroll");
+    marqueeLogger.debug("Initial marquee display set, scheduling scroll");
   
     setTimeout(() => {
-        logger.debug("Beginning scrolling phase of marquee");
+        marqueeLogger.debug("Beginning scrolling phase of marquee");
         isScrolling = true;
         marqueeInterval = setInterval(() => {
             const currentTime = Date.now();
@@ -82,7 +85,7 @@ function startMarquee(contexts, text) {
  * @param {Array} contexts - Array of Stream Deck context IDs
  */
 function updateMarqueeForAllContexts(contexts) {
-    logger.debug(`Updating marquee for ${contexts.length} contexts`);
+    marqueeLogger.debug(`Updating marquee for ${contexts.length} contexts`);
     contexts.forEach(context => updateMarqueeDisplay(context));
 }
 
@@ -97,7 +100,7 @@ function updateMarqueeDisplay(context) {
     const marqueeSettings = window.ciderDeckSettings?.dial?.marquee || {};
     const displayLength = marqueeSettings.length ?? 15;
     
-    logger.debug(`Updating marquee display for context: ${context} (text length: ${totalTextLength}, display length: ${displayLength})`);
+    marqueeLogger.debug(`Updating marquee display for context: ${context} (text length: ${totalTextLength}, display length: ${displayLength})`);
   
     // For continuous scrolling, we need to handle wrapping properly
     if (totalTextLength > displayLength) {
@@ -107,17 +110,17 @@ function updateMarqueeDisplay(context) {
         // Reset position if it exceeds the original text length (plus the separator)
         if (marqueePosition >= totalTextLength + 3) {
             marqueePosition = 0;
-            logger.debug("Marquee position reset to beginning");
+            marqueeLogger.debug("Marquee position reset to beginning");
             // No need to pause here for continuous scrolling
         }
     
         let visibleText = paddedText.substring(marqueePosition, marqueePosition + displayLength);
-        logger.debug(`Setting visible text: "${visibleText}"`);
+        marqueeLogger.debug(`Setting visible text: "${visibleText}"`);
     
         $SD.setFeedback(context, { "title": visibleText });
     } else {
         // If text is shorter than display length, just center it
-        logger.debug(`Text fits display, no scrolling needed: "${currentMarqueeText}"`);
+        marqueeLogger.debug(`Text fits display, no scrolling needed: "${currentMarqueeText}"`);
         $SD.setFeedback(context, { "title": currentMarqueeText });
     }
 }
