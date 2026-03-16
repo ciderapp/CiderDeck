@@ -107,7 +107,13 @@ Object.keys(actions).forEach(actionKey => {
             window.contexts[actionKey].push(context);
             console.debug(`[DEBUG] [Context] Context added for ${actionKey}: ${context}`);
         }
-        
+
+        // Store per-instance settings for the playpause button
+        if (actionKey === 'toggleAction') {
+            window.playpauseSettings = window.playpauseSettings || {};
+            window.playpauseSettings[context] = payload.settings || {};
+        }
+
         // Handle song display settings if this is a song name action
         if (actionKey === 'songNameAction') {
             if (payload.settings?.songDisplaySettings) {
@@ -151,6 +157,10 @@ Object.keys(actions).forEach(actionKey => {
             console.debug(`[DEBUG] [Context] Context removed for ${actionKey}: ${context}`);
         }
 
+        if (actionKey === 'toggleAction' && window.playpauseSettings) {
+            delete window.playpauseSettings[context];
+        }
+
         if (actionKey === 'ciderPlaybackAction' || actionKey === 'albumArtAction') {
             if (!window.contexts.ciderPlaybackAction[0] && !window.contexts.albumArtAction[0]) {
                 console.debug(`[DEBUG] [Action] ciderPlaybackAction and albumArtAction disappeared.`);
@@ -161,11 +171,19 @@ Object.keys(actions).forEach(actionKey => {
         }
     });
 
-    action.onKeyDown(() => {
+    // Keep per-instance playpause settings fresh when Stream Deck re-delivers them
+    if (actionKey === 'toggleAction') {
+        action.onDidReceiveSettings((jsn) => {
+            window.playpauseSettings = window.playpauseSettings || {};
+            window.playpauseSettings[jsn.context] = jsn.payload?.settings || {};
+        });
+    }
+
+    action.onKeyDown((jsn) => {
         console.debug(`[DEBUG] [Action] ${actionKey} action triggered.`);
         switch (actionKey) {
             case 'toggleAction': {
-                const toggleMode = window.ciderDeckSettings?.playpause?.mode || 'toggle';
+                const toggleMode = window.playpauseSettings?.[jsn.context]?.mode || 'toggle';
                 const toggleEndpoint = ['play', 'pause'].includes(toggleMode) ? toggleMode : 'playpause';
                 CiderDeckUtils.comRPC("POST", toggleEndpoint);
                 setTimeout(() => {

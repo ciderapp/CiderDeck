@@ -51,18 +51,7 @@ function handleSettingsUpdate(settings) {
  */
 function handleGlobalSettingsUpdate(globalSettings) {
     console.log('Global settings updated:', globalSettings);
-    
-    // If we have toggle settings in the global object, update our UI
-    if (globalSettings.playpause) {
-        // Synchronize the action settings with global toggle settings
-        baseInspector.actionSettings = {...baseInspector.actionSettings, ...globalSettings.playpause};
-        
-        // Update our temporary settings to keep them in sync
-        tempSettings = JSON.parse(JSON.stringify(baseInspector.actionSettings));
-        
-        // Load the temporary settings to the UI
-        loadSettingsToUI(tempSettings);
-    }
+    // Global settings (RPC key etc) don't affect the per-instance playpause mode
 }
 
 /**
@@ -79,12 +68,9 @@ function initUI() {
         
         // Apply temp settings to actual settings
         baseInspector.actionSettings = JSON.parse(JSON.stringify(tempSettings));
-        
-        // Sync with global settings
-        baseInspector.syncActionToGlobalSettings();
-        
-        // Send the settings to Stream Deck
-        baseInspector.sendSettings();
+
+        // Save per-instance settings to Stream Deck (not global)
+        $PI.setSettings(baseInspector.actionSettings);
         
         // Show a success message
         const button = document.getElementById('save-settings');

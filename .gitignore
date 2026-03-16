@@ -1,8 +1,7 @@
 .DS_Store
 .idea/**
-/src/DistributionTool
-com.elgato.template.streamDeckPlugin
+/src/DistributionTool*
+*.streamDeckPlugin
 .vscode/**
 package.json
 .history
-src/Release/sh.cider.streamdeck.streamDeckPlugin
