@@ -117,7 +117,7 @@
 			],
 			"Tooltip": "Provides a tile to toggle the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.toggle",
-			"PropertyInspectorPath": "actions/inspectors/inspector.html"
+			"PropertyInspectorPath": "actions/inspectors/playpause-inspector.html"
 		},
 		{
 			"Icon": "actions/assets/app/repeat",

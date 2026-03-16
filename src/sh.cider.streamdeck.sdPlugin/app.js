@@ -164,8 +164,10 @@ Object.keys(actions).forEach(actionKey => {
     action.onKeyDown(() => {
         console.debug(`[DEBUG] [Action] ${actionKey} action triggered.`);
         switch (actionKey) {
-            case 'toggleAction':
-                CiderDeckUtils.comRPC("POST", "playpause");
+            case 'toggleAction': {
+                const toggleMode = window.ciderDeckSettings?.playpause?.mode || 'toggle';
+                const toggleEndpoint = ['play', 'pause'].includes(toggleMode) ? toggleMode : 'playpause';
+                CiderDeckUtils.comRPC("POST", toggleEndpoint);
                 setTimeout(() => {
                     CiderDeckUtils.comRPC("GET", "now-playing").then(data => {
                         if (data && data.status === "ok") {
@@ -174,6 +176,7 @@ Object.keys(actions).forEach(actionKey => {
                     });
                 }, 1000);
                 break;
+            }
             case 'repeatAction':
                 CiderDeckUtils.comRPC("POST", "toggle-repeat");
                 break;
@@ -279,6 +282,9 @@ const defaultSettings = {
     },
     favorite: {
         alsoAddToLibrary: false
+    },
+    playpause: {
+        mode: 'toggle'
     },
     dial: {
         rotationAction: 'volume',
