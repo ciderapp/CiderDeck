@@ -7,7 +7,7 @@
 	"SDKVersion": 2,
 	"Icon": "actions/assets/app/icon",
 	"URL": "https://cider.sh",
-	"Version": "3.2.0.0",
+	"Version": "3.3.0.0",
 	"Software": {
 		"MinimumVersion": "6.4"
 	},
