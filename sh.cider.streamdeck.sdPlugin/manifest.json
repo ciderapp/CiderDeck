@@ -14,7 +14,7 @@
 		"Debug": "enabled"
 	},
 	"Software": {
-		"MinimumVersion": "6.9"
+		"MinimumVersion": "6.8"
 	},
 	"OS": [
 		{
