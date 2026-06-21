@@ -26,13 +26,15 @@
 			"MinimumVersion": "10"
 		}
 	],
-	"Category": "Cider",
+	"Category": "CiderDeck",
 	"CategoryIcon": "actions/assets/app/icon",
 	"Actions": [
 		{
 			"Icon": "actions/assets/app/media-playlist",
 			"Name": "Cider Playback",
-			"Controllers": ["Encoder"],
+			"Controllers": [
+				"Encoder"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/playback-dial.html",
 			"Encoder": {
@@ -45,8 +47,12 @@
 				}
 			},
 			"States": [
-				{ "Image": "actions/assets/buttons/media-playlist" },
-				{ "Image": "actions/assets/buttons/offline/media-playlist" }
+				{
+					"Image": "actions/assets/buttons/media-playlist"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/media-playlist"
+				}
 			],
 			"Tooltip": "Provides various controls for managing your media through Cider.",
 			"UUID": "sh.cider.streamdeck.playback"
@@ -54,11 +60,15 @@
 		{
 			"Icon": "actions/assets/app/desk-name-plate",
 			"Name": "Song Display",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/song-display.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/blank" }
+				{
+					"Image": "actions/assets/buttons/blank"
+				}
 			],
 			"Tooltip": "Provides a tile to show the currently playing song from Cider.",
 			"UUID": "sh.cider.streamdeck.songname"
@@ -66,12 +76,18 @@
 		{
 			"Icon": "actions/assets/app/image-sparkle",
 			"Name": "Album Art",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/icon" },
-				{ "Image": "actions/assets/buttons/offline/icon" }
+				{
+					"Image": "actions/assets/buttons/icon"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/icon"
+				}
 			],
 			"Tooltip": "Provides a tile to show the currently playing song's Album Art from Cider.",
 			"UUID": "sh.cider.streamdeck.albumart"
@@ -79,13 +95,21 @@
 		{
 			"Icon": "actions/assets/app/media-play-pause-toggle",
 			"Name": "Toggle Playback",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/media-play" },
-				{ "Image": "actions/assets/buttons/media-pause" },
-				{ "Image": "actions/assets/buttons/offline/media-play" }
+				{
+					"Image": "actions/assets/buttons/media-play"
+				},
+				{
+					"Image": "actions/assets/buttons/media-pause"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/media-play"
+				}
 			],
 			"Tooltip": "Provides a tile to toggle the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.toggle"
@@ -93,14 +117,24 @@
 		{
 			"Icon": "actions/assets/app/repeat",
 			"Name": "Toggle Repeat",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/repeat" },
-				{ "Image": "actions/assets/buttons/alt/repeat-once" },
-				{ "Image": "actions/assets/buttons/alt/repeat" },
-				{ "Image": "actions/assets/buttons/offline/repeat" }
+				{
+					"Image": "actions/assets/buttons/repeat"
+				},
+				{
+					"Image": "actions/assets/buttons/alt/repeat-once"
+				},
+				{
+					"Image": "actions/assets/buttons/alt/repeat"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/repeat"
+				}
 			],
 			"Tooltip": "Provides a tile to toggle if the currently playing song/queue should be repeated in Cider.",
 			"UUID": "sh.cider.streamdeck.repeat"
@@ -108,13 +142,21 @@
 		{
 			"Icon": "actions/assets/app/shuffle",
 			"Name": "Toggle Shuffle",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/shuffle" },
-				{ "Image": "actions/assets/buttons/alt/shuffle" },
-				{ "Image": "actions/assets/buttons/offline/shuffle" }
+				{
+					"Image": "actions/assets/buttons/shuffle"
+				},
+				{
+					"Image": "actions/assets/buttons/alt/shuffle"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/shuffle"
+				}
 			],
 			"Tooltip": "Provides a tile to toggle if the currently playing queue should be shuffled in Cider.",
 			"UUID": "sh.cider.streamdeck.shuffle"
@@ -122,12 +164,18 @@
 		{
 			"Icon": "actions/assets/app/volume-plus",
 			"Name": "Volume Up",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/volume-up-1" },
-				{ "Image": "actions/assets/buttons/offline/volume-up-1" }
+				{
+					"Image": "actions/assets/buttons/volume-up-1"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/volume-up-1"
+				}
 			],
 			"Tooltip": "Provides a tile to raise the volume in Cider.",
 			"UUID": "sh.cider.streamdeck.volumeup"
@@ -135,12 +183,18 @@
 		{
 			"Icon": "actions/assets/app/volume-minus",
 			"Name": "Volume Down",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/volume-down-1" },
-				{ "Image": "actions/assets/buttons/offline/volume-down-1" }
+				{
+					"Image": "actions/assets/buttons/volume-down-1"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/volume-down-1"
+				}
 			],
 			"Tooltip": "Provides a tile to lower the volume in Cider.",
 			"UUID": "sh.cider.streamdeck.volumedown"
@@ -148,13 +202,21 @@
 		{
 			"Icon": "actions/assets/app/duplicate-plus",
 			"Name": "Add To Library",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/plus" },
-				{ "Image": "actions/assets/buttons/alt/check" },
-				{ "Image": "actions/assets/buttons/offline/plus" }
+				{
+					"Image": "actions/assets/buttons/plus"
+				},
+				{
+					"Image": "actions/assets/buttons/alt/check"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/plus"
+				}
 			],
 			"Tooltip": "Provides a tile to add/remove the currently playing song from your library in Cider.",
 			"UUID": "sh.cider.streamdeck.addtolibrary"
@@ -162,13 +224,21 @@
 		{
 			"Icon": "actions/assets/app/thumbs-down",
 			"Name": "Dislike",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/thumbs-down-1" },
-				{ "Image": "actions/assets/buttons/alt/thumbs-down" },
-				{ "Image": "actions/assets/buttons/offline/thumbs-down-1" }
+				{
+					"Image": "actions/assets/buttons/thumbs-down-1"
+				},
+				{
+					"Image": "actions/assets/buttons/alt/thumbs-down"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/thumbs-down-1"
+				}
 			],
 			"Tooltip": "Provides a tile to dislike the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.dislike"
@@ -176,13 +246,21 @@
 		{
 			"Icon": "actions/assets/app/star",
 			"Name": "Favorite",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/like.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/star-1" },
-				{ "Image": "actions/assets/buttons/alt/star" },
-				{ "Image": "actions/assets/buttons/offline/star-1" }
+				{
+					"Image": "actions/assets/buttons/star-1"
+				},
+				{
+					"Image": "actions/assets/buttons/alt/star"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/star-1"
+				}
 			],
 			"Tooltip": "Provides a tile to like the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.like"
@@ -190,12 +268,18 @@
 		{
 			"Icon": "actions/assets/app/media-next",
 			"Name": "Skip Song",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/media-next" },
-				{ "Image": "actions/assets/buttons/offline/media-next" }
+				{
+					"Image": "actions/assets/buttons/media-next"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/media-next"
+				}
 			],
 			"Tooltip": "Provides a tile to skip the currently playing song in Cider.",
 			"UUID": "sh.cider.streamdeck.skip"
@@ -203,12 +287,18 @@
 		{
 			"Icon": "actions/assets/app/media-previous",
 			"Name": "Previous Song",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/previous.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/media-previous" },
-				{ "Image": "actions/assets/buttons/offline/media-previous" }
+				{
+					"Image": "actions/assets/buttons/media-previous"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/media-previous"
+				}
 			],
 			"Tooltip": "Provides a tile to play the previous song in Cider.",
 			"UUID": "sh.cider.streamdeck.previous"
@@ -216,12 +306,18 @@
 		{
 			"Icon": "actions/assets/app/icon",
 			"Name": "Cider Logo",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/icon" },
-				{ "Image": "actions/assets/buttons/offline/icon" }
+				{
+					"Image": "actions/assets/buttons/icon"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/icon"
+				}
 			],
 			"Tooltip": "Simple tile to show the Cider logo, useful for decorative purposes.",
 			"UUID": "sh.cider.streamdeck.ciderlogo"
@@ -229,12 +325,18 @@
 		{
 			"Icon": "actions/assets/app/atmos-on",
 			"Name": "Toggle Atmos",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/app/atmos-off" },
-				{ "Image": "actions/assets/app/atmos-on" }
+				{
+					"Image": "actions/assets/app/atmos-off"
+				},
+				{
+					"Image": "actions/assets/app/atmos-on"
+				}
 			],
 			"Tooltip": "Toggle Dolby Atmos / spatial audio in Cider.",
 			"UUID": "sh.cider.streamdeck.atmos"
@@ -242,12 +344,18 @@
 		{
 			"Icon": "actions/assets/app/crossfade-on",
 			"Name": "Toggle Crossfade",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/app/crossfade-off" },
-				{ "Image": "actions/assets/app/crossfade-on" }
+				{
+					"Image": "actions/assets/app/crossfade-off"
+				},
+				{
+					"Image": "actions/assets/app/crossfade-on"
+				}
 			],
 			"Tooltip": "Toggle Crossfade between tracks in Cider.",
 			"UUID": "sh.cider.streamdeck.crossfade"
@@ -255,12 +363,18 @@
 		{
 			"Icon": "actions/assets/app/automix-on",
 			"Name": "Toggle Automix",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/app/automix-off" },
-				{ "Image": "actions/assets/app/automix-on" }
+				{
+					"Image": "actions/assets/app/automix-off"
+				},
+				{
+					"Image": "actions/assets/app/automix-on"
+				}
 			],
 			"Tooltip": "Toggle Automix (AI transitions) in Cider.",
 			"UUID": "sh.cider.streamdeck.automix"
@@ -268,11 +382,15 @@
 		{
 			"Icon": "actions/assets/app/listenmode-on",
 			"Name": "Listening Mode",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/app/listenmode-on" }
+				{
+					"Image": "actions/assets/app/listenmode-on"
+				}
 			],
 			"Tooltip": "Cycle Cider's Listening Mode (Off / Gaming / Unwind).",
 			"UUID": "sh.cider.streamdeck.listeningmode"
@@ -280,11 +398,15 @@
 		{
 			"Icon": "actions/assets/app/media-playlist",
 			"Name": "Clear Queue",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/app/media-playlist" }
+				{
+					"Image": "actions/assets/app/media-playlist"
+				}
 			],
 			"Tooltip": "Clear Cider's play queue (press once to arm, again to confirm).",
 			"UUID": "sh.cider.streamdeck.queueclear"
@@ -292,11 +414,15 @@
 		{
 			"Icon": "actions/assets/app/image-sparkle",
 			"Name": "Smart Queue",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/cider-connection.html",
 			"States": [
-				{ "Image": "actions/assets/app/image-sparkle" }
+				{
+					"Image": "actions/assets/app/image-sparkle"
+				}
 			],
 			"Tooltip": "Toggle the Smart Queue Optimizer (requires Automix).",
 			"UUID": "sh.cider.streamdeck.smartqueue"
@@ -304,7 +430,9 @@
 		{
 			"Icon": "actions/assets/app/media-playlist",
 			"Name": "Queue Coverflow",
-			"Controllers": ["Encoder"],
+			"Controllers": [
+				"Encoder"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/queue-dial.html",
 			"Encoder": {
@@ -316,8 +444,12 @@
 				}
 			},
 			"States": [
-				{ "Image": "actions/assets/buttons/media-playlist" },
-				{ "Image": "actions/assets/buttons/offline/media-playlist" }
+				{
+					"Image": "actions/assets/buttons/media-playlist"
+				},
+				{
+					"Image": "actions/assets/buttons/offline/media-playlist"
+				}
 			],
 			"Tooltip": "Browse the up-next queue on the touchscreen; press to jump to a track.",
 			"UUID": "sh.cider.streamdeck.queuedial"
@@ -325,11 +457,16 @@
 		{
 			"Icon": "actions/assets/app/media-playlist",
 			"Name": "Pinned Item",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/pinned-item.html",
 			"States": [
-				{ "Image": "actions/assets/app/media-playlist", "TitleAlignment": "bottom" }
+				{
+					"Image": "actions/assets/app/media-playlist",
+					"TitleAlignment": "bottom"
+				}
 			],
 			"Tooltip": "Play a pinned playlist, album, or station.",
 			"UUID": "sh.cider.streamdeck.pinneditem"
@@ -337,11 +474,15 @@
 		{
 			"Icon": "actions/assets/app/image-sparkle",
 			"Name": "Album Art Grid",
-			"Controllers": ["Keypad"],
+			"Controllers": [
+				"Keypad"
+			],
 			"DisableAutomaticStates": true,
 			"PropertyInspectorPath": "ui/album-art-grid.html",
 			"States": [
-				{ "Image": "actions/assets/buttons/icon" }
+				{
+					"Image": "actions/assets/buttons/icon"
+				}
 			],
 			"Tooltip": "Place several in a block (e.g. 2×2) to show the album art across multiple keys.",
 			"UUID": "sh.cider.streamdeck.albumartgrid"
