@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Cider Library</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+		<style>
+			body {
+				margin: 0;
+				background: #2d2d2d;
+				height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+			header {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 12px;
+				border-bottom: 1px solid #464646;
+				flex: 0 0 auto;
+			}
+			header sdpi-select { flex: 0 0 auto; }
+			header sdpi-textfield { flex: 1; }
+			main {
+				flex: 1;
+				overflow-y: auto;
+				padding: 14px 12px;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+				gap: 14px;
+			}
+			.card {
+				cursor: pointer;
+				border: 0;
+				background: transparent;
+				color: inherit;
+				padding: 0;
+				text-align: left;
+				font: inherit;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+			.art {
+				width: 100%;
+				aspect-ratio: 1;
+				border-radius: 6px;
+				background: #3d3d3d center/cover no-repeat;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+				outline: 1px solid transparent;
+				transition: outline-color 0.08s ease;
+			}
+			.card:hover .art,
+			.card:focus-visible .art {
+				outline: 2px solid #708090;
+			}
+			.name {
+				font-size: 9pt;
+				font-weight: 600;
+				color: #d8d8d8;
+				line-height: 1.25;
+				overflow: hidden;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+			}
+			.sub {
+				font-size: 8pt;
+				color: #969696;
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			footer {
+				flex: 0 0 auto;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 8px 12px;
+				border-top: 1px solid #464646;
+			}
+			.muted {
+				color: #969696;
+				font-size: 9pt;
+			}
+			.empty {
+				color: #969696;
+				text-align: center;
+				padding: 48px 0;
+				font-size: 10pt;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<sdpi-select id="source">
+				<option value="playlists">Playlists</option>
+				<option value="albums">Albums</option>
+			</sdpi-select>
+			<sdpi-textfield id="q" placeholder="Filter loaded items…"></sdpi-textfield>
+		</header>
+		<main>
+			<div class="grid" id="grid"></div>
+			<div class="empty" id="empty" hidden>No items.</div>
+		</main>
+		<footer>
+			<span class="muted" id="status">Loading…</span>
+			<sdpi-button id="more" hidden>Load more</sdpi-button>
+		</footer>
+
+		<script>
+			(function () {
+				const channel = "BroadcastChannel" in self ? new BroadcastChannel("cider-library") : null;
+				const grid = document.getElementById("grid");
+				const emptyEl = document.getElementById("empty");
+				const statusEl = document.getElementById("status");
+				const moreBtn = document.getElementById("more");
+				const sourceEl = document.getElementById("source");
+				const qEl = document.getElementById("q");
+
+				const state = {
+					source: "playlists",
+					items: { playlists: [], albums: [] },
+					offset: { playlists: 0, albums: 0 },
+					total: { playlists: null, albums: null },
+					loading: false,
+				};
+				const PAGE = 100;
+
+				function visible() {
+					const q = (qEl.value || "").trim().toLowerCase();
+					const all = state.items[state.source];
+					if (!q) return all;
+					return all.filter((it) => (it.name + " " + (it.sub || "")).toLowerCase().includes(q));
+				}
+
+				function render() {
+					const items = visible();
+					grid.innerHTML = "";
+					for (const it of items) {
+						const card = document.createElement("button");
+						card.className = "card";
+						const art = document.createElement("div");
+						art.className = "art";
+						if (it.artworkUrl) art.style.backgroundImage = `url("${it.artworkUrl}")`;
+						const name = document.createElement("div");
+						name.className = "name";
+						name.textContent = it.name;
+						card.appendChild(art);
+						card.appendChild(name);
+						if (it.sub) {
+							const sub = document.createElement("div");
+							sub.className = "sub";
+							sub.textContent = it.sub;
+							card.appendChild(sub);
+						}
+						card.onclick = () => pick(it);
+						grid.appendChild(card);
+					}
+					emptyEl.hidden = items.length > 0;
+					const loaded = state.items[state.source].length;
+					const total = state.total[state.source];
+					statusEl.textContent = total != null ? `${loaded} of ${total} loaded` : `${loaded} loaded`;
+					const hasMore = total != null ? loaded < total : false;
+					moreBtn.hidden = !hasMore;
+					moreBtn.disabled = state.loading;
+				}
+
+				function pick(it) {
+					post({ type: "pick", value: it.value, label: it.name, artworkUrl: it.artworkUrl || "" });
+					setTimeout(() => window.close(), 60);
+				}
+
+				function fetchPage() {
+					if (state.loading) return;
+					const total = state.total[state.source];
+					const loaded = state.items[state.source].length;
+					if (total != null && loaded >= total && loaded > 0) return;
+					state.loading = true;
+					statusEl.textContent = "Loading…";
+					post({ type: "fetch", source: state.source, offset: state.offset[state.source], limit: PAGE });
+				}
+
+				function onItems(msg) {
+					const src = msg.source;
+					const incoming = (msg.items || []).map((x) => ({
+						value: x.value, name: x.name, sub: x.sub || "", artworkUrl: x.artworkUrl || "",
+					}));
+					state.items[src] = state.items[src].concat(incoming);
+					state.offset[src] = state.items[src].length;
+					if (typeof msg.total === "number") state.total[src] = msg.total;
+					state.loading = false;
+					render();
+				}
+
+				let seq = 0;
+				const seen = new Set();
+				function post(m) {
+					m._id = "b" + seq++;
+					if (channel) channel.postMessage(m);
+					try { if (window.opener) window.opener.postMessage({ __ciderLib: m }, "*"); } catch (e) {}
+				}
+				function handle(m) {
+					if (!m || (m._id && seen.has(m._id))) return;
+					if (m._id) seen.add(m._id);
+					if (m.type === "items") onItems(m);
+					else if (m.type === "error") { state.loading = false; statusEl.textContent = "Error: " + (m.message || "failed"); }
+				}
+				if (channel) channel.onmessage = (ev) => handle(ev.data);
+				window.addEventListener("message", (ev) => { const d = ev.data; if (d && d.__ciderLib) handle(d.__ciderLib); });
+
+				sourceEl.addEventListener("valuechange", () => {
+					state.source = sourceEl.value;
+					qEl.value = "";
+					render();
+					if (state.items[state.source].length === 0) fetchPage();
+				});
+				qEl.addEventListener("valuechange", render);
+				moreBtn.addEventListener("click", fetchPage);
+
+				// Standalone preview fallback (only with ?preview): show samples so the
+				// layout can be designed without a live plugin.
+				if (location.search.includes("preview")) {
+					const SAMPLE = ["Active J-Pop","AlphaTheta House","Chill","Modern City Pop Essentials","Evergreen","Favorite Songs","French Touch Essentials","Get Up!","Hair Metal Essentials","Heavy Rotation","House Grooves","In the City","J-Chill","Late Night","Lo-Fi Beats","Morning Coffee"];
+					setTimeout(() => onItems({ type: "items", source: "playlists", total: SAMPLE.length,
+						items: SAMPLE.map((n, i) => ({ value: "playlists:p." + i, name: n })) }), 200);
+				}
+
+				// Boot
+				post({ type: "ready" });
+				fetchPage();
+			})();
+		</script>
+	</body>
+</html>

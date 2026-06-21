@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck - Queue Coverflow</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+	</head>
+	<body>
+		<div class="cd-bar">
+			<span class="cd-bar-status">
+				<span id="cd-dot" class="cd-dot"></span>
+				<span id="cd-status" class="cd-status">Checking…</span>
+			</span>
+			<button class="cd-gear" onclick="ciderOpenConnection()" title="Connection &amp; advanced settings">⚙</button>
+		</div>
+
+		<hr />
+
+		<sdpi-item label="Background">
+			<sdpi-select setting="background" default="album">
+				<option value="album">Match album art</option>
+				<option value="custom">Custom color</option>
+				<option value="none">Neutral dark</option>
+			</sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Custom color">
+			<sdpi-color setting="backgroundColor" default="#1c1c24"></sdpi-color>
+		</sdpi-item>
+		<p class="cd-hint">
+			Rotate to scroll the up-next queue; press to jump to the highlighted track. The
+			<b>white</b> outline is your cursor; the <b>red</b> outline marks the track that's
+			currently playing.
+		</p>
+
+		<script src="lib/cider-connection.js"></script>
+	</body>
+</html>

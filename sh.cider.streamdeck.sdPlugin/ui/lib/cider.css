@@ -1,0 +1,74 @@
+/* Small additions on top of sdpi-components' native theming. */
+:root {
+	color-scheme: dark;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 9pt;
+}
+
+.cd-status {
+	display: inline-flex;
+	align-items: center;
+	min-height: 26px;
+	font-family: inherit;
+	font-size: 9pt;
+	color: #9a9a9a;
+}
+.cd-status.on {
+	color: #36d399;
+}
+.cd-status.off {
+	color: #f87272;
+}
+
+.cd-hint {
+	font-family: inherit;
+	font-size: 8pt;
+	line-height: 1.45;
+	color: #8a8a8a;
+	margin: 6px 0 4px 102px;
+}
+
+.cd-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 1px 0 4px;
+}
+.cd-bar-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+}
+.cd-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #969696;
+	flex: 0 0 auto;
+}
+.cd-dot.on {
+	background: #36d399;
+}
+.cd-dot.off {
+	background: #f87272;
+}
+.cd-gear {
+	background: transparent;
+	border: 0;
+	color: #969696;
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 3px 6px;
+	border-radius: 4px;
+}
+.cd-gear:hover {
+	color: #d8d8d8;
+}
+.cd-gear:focus-visible {
+	outline: 1px solid #708090;
+}

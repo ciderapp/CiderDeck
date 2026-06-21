@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck Settings</title>
+		<script src="lib/sdpi-components.js"></script>
+		<script src="lib/cider-tiles.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+		<style>
+			body {
+				background: #2d2d2d;
+				margin: 0;
+			}
+			.topbar {
+				padding: 10px 14px 6px;
+			}
+			h1 {
+				font-size: 11pt;
+				font-weight: 600;
+				color: #d8d8d8;
+				margin: 0;
+			}
+			.tabs {
+				display: flex;
+				flex-wrap: wrap;
+				border-bottom: 1px solid #464646;
+				padding: 0 6px;
+			}
+			.tab {
+				background: transparent;
+				border: 0;
+				border-bottom: 2px solid transparent;
+				color: #969696;
+				font: inherit;
+				font-size: 9pt;
+				padding: 8px 11px;
+				cursor: pointer;
+				white-space: nowrap;
+			}
+			.tab:hover {
+				color: #d8d8d8;
+			}
+			.tab.active {
+				color: #d8d8d8;
+				border-bottom-color: #708090;
+			}
+			.panel {
+				padding: 12px 14px 16px;
+			}
+			.panel[hidden] {
+				display: none;
+			}
+			.panel-head {
+				color: #969696;
+				font-size: 8pt;
+				margin: 0 0 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="topbar"><h1>CiderDeck Settings</h1></div>
+		<div class="tabs" id="tabs"></div>
+		<div id="panels">
+			<!-- Connection panel (static; tile panels are appended after it) -->
+			<section class="panel" data-key="connection" hidden>
+				<sdpi-item label="Status">
+					<div id="win-status" class="cd-status">Checking…</div>
+				</sdpi-item>
+				<sdpi-item label="Host">
+					<sdpi-textfield id="host" placeholder="127.0.0.1"></sdpi-textfield>
+				</sdpi-item>
+				<sdpi-item label="Port">
+					<sdpi-textfield id="port" placeholder="10767"></sdpi-textfield>
+				</sdpi-item>
+				<sdpi-item label="API Token">
+					<sdpi-password id="token" placeholder="Paste a token, or use Authorize"></sdpi-password>
+				</sdpi-item>
+				<sdpi-item>
+					<sdpi-button id="authorize">Authorize with Cider</sdpi-button>
+				</sdpi-item>
+				<p class="cd-hint">
+					Most users only need <b>Authorize</b>. Set a custom host/port or paste a token for advanced
+					setups. Changes apply immediately - CiderDeck reconnects when any of these change.
+				</p>
+			</section>
+		</div>
+
+		<script>
+			(function () {
+				const channel = "BroadcastChannel" in self ? new BroadcastChannel("cider-connection") : null;
+				const $ = (id) => document.getElementById(id);
+				const tabsEl = $("tabs"), panelsEl = $("panels");
+				const hostEl = $("host"), portEl = $("port"), tokenEl = $("token"), authorizeBtn = $("authorize");
+				const winStatus = $("win-status");
+
+				let seq = 0;
+				const seen = new Set();
+				let primed = false, waiting = false;
+				let tiles = [], activeContext = "", activeKey = "connection";
+
+				function post(m) {
+					m._id = "w" + seq++;
+					if (channel) channel.postMessage(m);
+					try { if (window.opener) window.opener.postMessage({ __ciderConn: m }, "*"); } catch (e) {}
+				}
+
+				// ---- Connection status ----
+				function applyStatus(p) {
+					waiting = false;
+					let state = "", text = "Not authorized";
+					if (p.connected) { state = "on"; text = "Connected"; }
+					else if (p.error) { state = "off"; text = "Failed: " + p.error; }
+					else if (p.hasToken) { state = "off"; text = "Cider offline - token saved"; }
+					winStatus.className = "cd-status" + (state ? " " + state : "");
+					winStatus.textContent = text;
+					authorizeBtn.hidden = !!p.connected;
+					authorizeBtn.disabled = false;
+				}
+
+				function requestAuth() {
+					waiting = true;
+					authorizeBtn.disabled = true;
+					winStatus.className = "cd-status";
+					winStatus.textContent = "Waiting for approval in Cider…";
+					post({ type: "requestAuth" });
+				}
+				authorizeBtn.addEventListener("click", requestAuth);
+
+				let saveTimer = null;
+				function saveSetting(key, value) {
+					clearTimeout(saveTimer);
+					saveTimer = setTimeout(() => post({ type: "setSetting", key, value: String(value || "").trim() }), 250);
+				}
+				hostEl.addEventListener("valuechange", () => saveSetting("host", hostEl.value));
+				portEl.addEventListener("valuechange", () => saveSetting("port", portEl.value));
+				tokenEl.addEventListener("valuechange", () => saveSetting("token", tokenEl.value));
+
+				// ---- Tile quick-editor ----
+				function coerce(field, v) {
+					if (field.type === "checkbox") return !!v;
+					if (field.type === "range" || field.valueType === "number") return Number(v);
+					return v != null ? v : "";
+				}
+
+				function buildControl(field, settings, context) {
+					const value = settings ? settings[field.key] : undefined;
+					if (field.type === "static") {
+						const el = document.createElement("div");
+						el.className = "cd-status";
+						el.textContent = value != null && value !== "" ? String(value) : (field.empty || "-");
+						return el;
+					}
+					let el;
+					if (field.type === "checkbox") {
+						el = document.createElement("sdpi-checkbox");
+						if (field.checkboxLabel) el.setAttribute("label", field.checkboxLabel);
+					} else if (field.type === "select") {
+						el = document.createElement("sdpi-select");
+						if (field.valueType) el.setAttribute("value-type", field.valueType);
+						for (const [val, lbl] of field.options) {
+							const o = document.createElement("option");
+							o.value = val;
+							o.textContent = lbl;
+							el.appendChild(o);
+						}
+					} else if (field.type === "range") {
+						el = document.createElement("sdpi-range");
+						el.setAttribute("min", field.min);
+						el.setAttribute("max", field.max);
+						el.setAttribute("step", field.step);
+						el.setAttribute("showlabels", "");
+					} else if (field.type === "color") {
+						el = document.createElement("sdpi-color");
+					} else if (field.type === "password") {
+						el = document.createElement("sdpi-password");
+						if (field.placeholder) el.setAttribute("placeholder", field.placeholder);
+					} else {
+						el = document.createElement("sdpi-textfield");
+						if (field.placeholder) el.setAttribute("placeholder", field.placeholder);
+					}
+					const init = value !== undefined && value !== null ? value : field.default;
+					if (init !== undefined) el._ciderInit = init;
+					let timer = null;
+					el.addEventListener("valuechange", function () {
+						clearTimeout(timer);
+						const raw = el.value;
+						timer = setTimeout(function () {
+							const cv = coerce(field, raw);
+							if (settings) settings[field.key] = cv; // keep local snapshot in sync across instance switches
+							const patch = {};
+							patch[field.key] = cv;
+							post({ type: "setTileSettings", context: context, patch: patch });
+						}, 200);
+					});
+					return el;
+				}
+
+				function applyInits(root) {
+					root.querySelectorAll("*").forEach(function (el) {
+						if (el._ciderInit !== undefined) {
+							try { el.value = el._ciderInit; } catch (e) {}
+						}
+					});
+				}
+
+				function instanceLabel(t) {
+					const kind = t.controller === "Encoder" ? "Dial" : "Key";
+					return t.coordinates ? kind + " " + t.coordinates.column + "," + t.coordinates.row : kind;
+				}
+
+				function renderForm(formEl, tile, schema) {
+					formEl.innerHTML = "";
+					for (const field of schema.fields) {
+						const item = document.createElement("sdpi-item");
+						if (field.type !== "checkbox" || field.label) item.setAttribute("label", field.label);
+						item.appendChild(buildControl(field, tile.settings, tile.context));
+						formEl.appendChild(item);
+					}
+					applyInits(formEl);
+				}
+
+				// One panel per action *type*. When a type has multiple placed tiles a
+				// native sdpi-select picks the instance, so the tab strip stays at ~one
+				// tab per type no matter how many tiles are placed.
+				function buildTypePanel(uuid, group, schema) {
+					const panel = document.createElement("section");
+					panel.className = "panel tile";
+					panel.dataset.key = "type:" + uuid;
+					panel.hidden = true;
+
+					const head = document.createElement("p");
+					head.className = "panel-head";
+					panel.appendChild(head);
+
+					const formEl = document.createElement("div");
+					formEl.className = "tile-form";
+
+					if (group.length > 1) {
+						head.textContent = schema.name;
+						const item = document.createElement("sdpi-item");
+						item.setAttribute("label", "Tile");
+						const sel = document.createElement("sdpi-select");
+						for (const t of group) {
+							const o = document.createElement("option");
+							o.value = t.context;
+							o.textContent = instanceLabel(t);
+							sel.appendChild(o);
+						}
+						item.appendChild(sel);
+						panel.appendChild(item);
+						panel.appendChild(formEl);
+						sel.addEventListener("valuechange", function () {
+							const tile = group.find((t) => t.context === sel.value) || group[0];
+							renderForm(formEl, tile, schema);
+						});
+						sel._ciderInit = group[0].context;
+						panel._selector = sel;
+						renderForm(formEl, group[0], schema);
+					} else {
+						const t = group[0];
+						head.textContent = schema.name + (t.coordinates ? "  ·  " + instanceLabel(t) : "");
+						panel.appendChild(formEl);
+						renderForm(formEl, t, schema);
+					}
+					return panel;
+				}
+
+				function addTab(key, label) {
+					const b = document.createElement("button");
+					b.className = "tab";
+					b.dataset.key = key;
+					b.textContent = label;
+					b.addEventListener("click", () => activate(key));
+					tabsEl.appendChild(b);
+				}
+
+				function activate(key) {
+					activeKey = key;
+					for (const t of tabsEl.querySelectorAll(".tab")) t.classList.toggle("active", t.dataset.key === key);
+					for (const p of panelsEl.querySelectorAll(".panel")) p.hidden = p.dataset.key !== key;
+				}
+
+				function buildTabs() {
+					tabsEl.innerHTML = "";
+					panelsEl.querySelectorAll(".panel").forEach((p) => { if (p.dataset.key !== "connection") p.remove(); });
+
+					addTab("connection", "Connection");
+
+					// Group editable tiles by action type - one tab per type.
+					const editable = tiles.filter((t) => CIDER_TILE_SCHEMAS[t.uuid]);
+					const groups = new Map();
+					for (const t of editable) {
+						if (!groups.has(t.uuid)) groups.set(t.uuid, []);
+						groups.get(t.uuid).push(t);
+					}
+
+					let activeTypeKey = null;
+					for (const [uuid, group] of groups) {
+						const schema = CIDER_TILE_SCHEMAS[uuid];
+						addTab("type:" + uuid, schema.name);
+						const panel = buildTypePanel(uuid, group, schema);
+						panelsEl.appendChild(panel);
+						applyInits(panel); // also applies the instance selector's default value
+						if (activeContext && group.some((t) => t.context === activeContext)) {
+							activeTypeKey = "type:" + uuid;
+							if (panel._selector) {
+								panel._selector.value = activeContext;
+								renderForm(panel.querySelector(".tile-form"), group.find((t) => t.context === activeContext), schema);
+							}
+						}
+					}
+
+					let key = "connection";
+					if (activeTypeKey) key = activeTypeKey;
+					else if (activeKey && [...tabsEl.querySelectorAll(".tab")].some((t) => t.dataset.key === activeKey)) key = activeKey;
+					activate(key);
+				}
+
+				// ---- Inbound ----
+				function handle(m) {
+					if (!m || (m._id && seen.has(m._id))) return;
+					if (m._id) seen.add(m._id);
+					if (m.type === "settings") {
+						if (primed) return;
+						primed = true;
+						hostEl.value = m.host || "";
+						portEl.value = m.port != null ? String(m.port) : "";
+						tokenEl.value = m.token || "";
+					} else if (m.type === "status") {
+						if (waiting && !m.connected && !m.error) return;
+						applyStatus(m);
+					} else if (m.type === "tiles") {
+						tiles = m.tiles || [];
+						activeContext = m.activeContext || "";
+						buildTabs();
+					}
+				}
+				if (channel) channel.onmessage = (ev) => handle(ev.data);
+				window.addEventListener("message", (ev) => { const d = ev.data; if (d && d.__ciderConn) handle(d.__ciderConn); });
+
+				// Boot
+				addTab("connection", "Connection");
+				activate("connection");
+				post({ type: "ready" });
+				post({ type: "listTiles" });
+			})();
+		</script>
+	</body>
+</html>

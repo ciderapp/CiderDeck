@@ -1,0 +1,53 @@
+{
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+	"id": "cider-playback",
+	"items": [
+		{
+			"key": "icon",
+			"type": "pixmap",
+			"rect": [8, 5, 46, 46]
+		},
+		{
+			"key": "song",
+			"type": "text",
+			"rect": [60, 7, 132, 24],
+			"alignment": "left",
+			"color": "#ffffff",
+			"font": { "size": 17, "weight": 600 }
+		},
+		{
+			"key": "artist",
+			"type": "text",
+			"rect": [60, 32, 132, 18],
+			"alignment": "left",
+			"color": "#b9b9c3",
+			"font": { "size": 13, "weight": 400 }
+		},
+		{
+			"key": "bar",
+			"type": "pixmap",
+			"rect": [8, 60, 184, 6]
+		},
+		{
+			"key": "tleft",
+			"type": "text",
+			"rect": [8, 71, 40, 18],
+			"alignment": "left",
+			"color": "#b9b9c3",
+			"font": { "size": 12, "weight": 400 }
+		},
+		{
+			"key": "status",
+			"type": "pixmap",
+			"rect": [50, 69, 100, 24]
+		},
+		{
+			"key": "tright",
+			"type": "text",
+			"rect": [152, 71, 40, 18],
+			"alignment": "right",
+			"color": "#b9b9c3",
+			"font": { "size": 12, "weight": 400 }
+		}
+	]
+}

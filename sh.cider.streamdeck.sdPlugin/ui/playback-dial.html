@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck - Playback Dial</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+	</head>
+	<body>
+		<div class="cd-bar">
+			<span class="cd-bar-status">
+				<span id="cd-dot" class="cd-dot"></span>
+				<span id="cd-status" class="cd-status">Checking…</span>
+			</span>
+			<button class="cd-gear" onclick="ciderOpenConnection()" title="Connection &amp; advanced settings">⚙</button>
+		</div>
+
+		<hr />
+
+		<sdpi-item label="Tap">
+			<sdpi-select setting="touchAction" default="playpause">
+				<option value="playpause">Play / pause</option>
+				<option value="addtolibrary">Add to library</option>
+				<option value="dislike">Dislike</option>
+			</sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Volume step">
+			<sdpi-range setting="volumeStep" min="1" max="10" step="1" default="2" showlabels></sdpi-range>
+		</sdpi-item>
+		<sdpi-item label="Seek step (s)">
+			<sdpi-range setting="seekStep" min="1" max="30" step="1" default="5" showlabels></sdpi-range>
+		</sdpi-item>
+
+		<hr />
+
+		<sdpi-item label="Status icons" type="group">
+			<sdpi-checkbox setting="showFavorite" label="Favorite" default="true"></sdpi-checkbox>
+			<sdpi-checkbox setting="showLibrary" label="In library"></sdpi-checkbox>
+			<sdpi-checkbox setting="showShuffle" label="Shuffle" default="true"></sdpi-checkbox>
+			<sdpi-checkbox setting="showRepeat" label="Repeat" default="true"></sdpi-checkbox>
+		</sdpi-item>
+		<p class="cd-hint">
+			<b>Rotate</b> seeks or adjusts volume; a short <b>press</b> switches between them.
+			<b>Tap</b> the screen's left/right edge for previous/next, the centre to play/pause.
+			<b>Hold</b> the screen <i>or</i> the dial for the action carousel (rotate to browse,
+			tap or press to fire, auto-closes when idle). The <b>status icons</b> show beneath the title.
+		</p>
+
+		<script src="lib/cider-connection.js"></script>
+	</body>
+</html>

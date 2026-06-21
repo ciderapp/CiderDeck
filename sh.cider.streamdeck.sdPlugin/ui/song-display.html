@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck - Song Display</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+	</head>
+	<body>
+		<div class="cd-bar">
+			<span class="cd-bar-status">
+				<span id="cd-dot" class="cd-dot"></span>
+				<span id="cd-status" class="cd-status">Checking…</span>
+			</span>
+			<button class="cd-gear" onclick="ciderOpenConnection()" title="Connection &amp; advanced settings">⚙</button>
+		</div>
+
+		<hr />
+
+		<sdpi-item label="Format">
+			<sdpi-textfield setting="customFormat" placeholder="{title} - overrides options below"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Prefix">
+			<sdpi-textfield setting="textPrefix" placeholder="(optional)"></sdpi-textfield>
+		</sdpi-item>
+		<sdpi-item label="Artist">
+			<sdpi-checkbox setting="showArtist" label="Show artist" default="true"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Album">
+			<sdpi-checkbox setting="showAlbum" label="Show album"></sdpi-checkbox>
+		</sdpi-item>
+		<sdpi-item label="Max lines">
+			<sdpi-select setting="maxLines" value-type="number" default="3">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+			</sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Align">
+			<sdpi-select setting="alignment" default="center">
+				<option value="left">Left</option>
+				<option value="center">Center</option>
+				<option value="right">Right</option>
+			</sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Font size">
+			<sdpi-range setting="fontSize" min="12" max="24" step="1" default="18" showlabels></sdpi-range>
+		</sdpi-item>
+		<sdpi-item label="Text color">
+			<sdpi-color setting="textColor" default="#ffffff"></sdpi-color>
+		</sdpi-item>
+		<sdpi-item label="Background">
+			<sdpi-color setting="backgroundColor" default="#0b0b0f"></sdpi-color>
+		</sdpi-item>
+
+		<script src="lib/cider-connection.js"></script>
+	</body>
+</html>

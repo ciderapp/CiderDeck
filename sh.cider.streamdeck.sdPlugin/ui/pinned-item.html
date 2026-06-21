@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck - Pinned Item</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+	</head>
+	<body>
+		<div class="cd-bar">
+			<span class="cd-bar-status">
+				<span id="cd-dot" class="cd-dot"></span>
+				<span id="cd-status" class="cd-status">Checking…</span>
+			</span>
+			<button class="cd-gear" onclick="ciderOpenConnection()" title="Connection &amp; advanced settings">⚙</button>
+		</div>
+
+		<hr />
+
+		<sdpi-item label="Collection">
+			<sdpi-button id="cd-browse" onclick="ciderBrowseLibrary()">Browse Library…</sdpi-button>
+		</sdpi-item>
+		<sdpi-item label="Pinned">
+			<div id="cd-pin-name" class="cd-status">(none)</div>
+		</sdpi-item>
+		<sdpi-item label="Shuffle">
+			<sdpi-checkbox setting="shuffle"></sdpi-checkbox>
+		</sdpi-item>
+		<p class="cd-hint">
+			Click <b>Browse Library…</b> to pick a playlist or album from a full window (connect
+			first), then press the key to play it. Name the key with the Title field. For a
+			station or to paste an id, use the manual fields below (they take priority when filled).
+		</p>
+
+		<hr />
+
+		<sdpi-item label="Manual type">
+			<sdpi-select setting="collectionType" default="">
+				<option value="">- use Browse above -</option>
+				<option value="playlists">Playlist</option>
+				<option value="albums">Album</option>
+				<option value="stations">Station</option>
+			</sdpi-select>
+		</sdpi-item>
+		<sdpi-item label="Manual id">
+			<sdpi-textfield setting="collectionId" placeholder="pl.… / l.… / ra.…"></sdpi-textfield>
+		</sdpi-item>
+
+		<script src="lib/cider-library.js"></script>
+		<script src="lib/cider-connection.js"></script>
+	</body>
+</html>

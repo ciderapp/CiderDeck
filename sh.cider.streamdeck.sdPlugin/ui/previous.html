@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck - Previous</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+	</head>
+	<body>
+		<div class="cd-bar">
+			<span class="cd-bar-status">
+				<span id="cd-dot" class="cd-dot"></span>
+				<span id="cd-status" class="cd-status">Checking…</span>
+			</span>
+			<button class="cd-gear" onclick="ciderOpenConnection()" title="Connection &amp; advanced settings">⚙</button>
+		</div>
+
+		<hr />
+
+		<sdpi-item label="Previous">
+			<sdpi-checkbox setting="alwaysGoToPrevious" label="Always go to previous track"></sdpi-checkbox>
+		</sdpi-item>
+		<p class="cd-hint">
+			When off, pressing restarts the current track if you're more than 3s in; otherwise it goes to the previous
+			track.
+		</p>
+
+		<script src="lib/cider-connection.js"></script>
+	</body>
+</html>

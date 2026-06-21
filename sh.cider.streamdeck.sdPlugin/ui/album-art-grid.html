@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>CiderDeck - Album Art Grid</title>
+		<script src="lib/sdpi-components.js"></script>
+		<link rel="stylesheet" href="lib/cider.css" />
+	</head>
+	<body>
+		<div class="cd-bar">
+			<span class="cd-bar-status">
+				<span id="cd-dot" class="cd-dot"></span>
+				<span id="cd-status" class="cd-status">Checking…</span>
+			</span>
+			<button class="cd-gear" onclick="ciderOpenConnection()" title="Connection &amp; advanced settings">⚙</button>
+		</div>
+
+		<hr />
+
+		<p class="cd-hint">
+			Place several of these in a contiguous block - a <b>2×2</b> is the classic - and they
+			tile the current album art across the keys to form one large cover. They arrange
+			themselves from their positions, so any rectangle works (2×2, 3×2, a tall 1×3…). A
+			single tile just shows the whole cover.
+		</p>
+
+		<script src="lib/cider-connection.js"></script>
+	</body>
+</html>
