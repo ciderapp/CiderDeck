@@ -159,7 +159,7 @@ export class PlaybackDialAction extends CiderDialAction {
 			this.lastTrackId = trackId;
 			this.offset = 0;
 		}
-		this.setAnimating(state.online && !!state.nowPlaying);
+		this.setAnimating(this.titleNeedsMarquee(state));
 
 		const feedback: Record<string, string | number> = this.buildFeedback(dial, state);
 		await this.attachIcon(dial, state, feedback);
@@ -244,6 +244,10 @@ export class PlaybackDialAction extends CiderDialAction {
 	private titleText(state: Readonly<PlayerState>): string {
 		const title = state.nowPlaying?.title || "Not Playing";
 		return this.animating ? marqueeWindow(title, TITLE_WIDTH, this.offset) : title;
+	}
+
+	private titleNeedsMarquee(state: Readonly<PlayerState>): boolean {
+		return state.online && (state.nowPlaying?.title?.length ?? 0) > TITLE_WIDTH;
 	}
 
 	private setAnimating(on: boolean): void {
