@@ -7,7 +7,7 @@
 	"UUID": "sh.cider.streamdeck",
 	"Icon": "actions/assets/app/icon",
 	"URL": "https://cider.sh",
-	"Version": "4.0.0.0",
+	"Version": "4.0.1.0",
 	"SDKVersion": 3,
 	"Nodejs": {
 		"Version": "20",
