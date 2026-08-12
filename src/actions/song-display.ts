@@ -1,4 +1,4 @@
-import { action, type KeyAction } from "@elgato/streamdeck";
+import { action, type DidReceiveSettingsEvent, type KeyAction, type WillAppearEvent } from "@elgato/streamdeck";
 import { UUID } from "../manifest-uuids";
 import type { PlayerState } from "../models/player-state";
 import type { SongDisplaySettings } from "../models/settings";
@@ -13,10 +13,16 @@ export class SongDisplayAction extends CiderKeyAction {
 	private offset = 0;
 	private animating = false;
 	private lastTrackId: string | undefined;
+	private readonly settings = new Map<string, SongDisplaySettings>();
 	private readonly lastSvg = new Map<string, string>();
 
 	protected slices(): ["track"] {
 		return ["track"];
+	}
+
+	override onWillAppear(ev: WillAppearEvent): void {
+		this.settings.set(ev.action.id, (ev.payload.settings ?? {}) as SongDisplaySettings);
+		super.onWillAppear(ev);
 	}
 
 	protected override repaintAll(state: Readonly<PlayerState>): void {
@@ -30,8 +36,8 @@ export class SongDisplayAction extends CiderKeyAction {
 		this.renderAll(state);
 	}
 
-	protected async paint(action: KeyAction, state: Readonly<PlayerState>): Promise<void> {
-		const settings = (await action.getSettings()) as SongDisplaySettings;
+	protected paint(action: KeyAction, state: Readonly<PlayerState>): void {
+		const settings = this.settings.get(action.id) ?? {};
 		const svg = !state.online
 			? renderOfflineSvg(settings.backgroundColor)
 			: renderSongSvg(state.nowPlaying, settings, this.animating ? this.offset : undefined);
@@ -61,6 +67,7 @@ export class SongDisplayAction extends CiderKeyAction {
 
 	protected override onLastDisappear(): void {
 		this.setAnimating(false);
+		this.settings.clear();
 		this.lastSvg.clear();
 	}
 
@@ -68,8 +75,9 @@ export class SongDisplayAction extends CiderKeyAction {
 		this.lastSvg.clear();
 	}
 
-	override async onDidReceiveSettings(): Promise<void> {
-		this.lastSvg.clear(); // formatting changed; force re-render
-		this.renderAll(this.store.snapshot);
+	override onDidReceiveSettings(ev: DidReceiveSettingsEvent): void {
+		this.settings.set(ev.action.id, (ev.payload.settings ?? {}) as SongDisplaySettings);
+		this.lastSvg.delete(ev.action.id); // formatting changed; force re-render
+		if (ev.action.isKey()) this.paint(ev.action, this.store.snapshot);
 	}
 }
