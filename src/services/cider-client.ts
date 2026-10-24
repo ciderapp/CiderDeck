@@ -175,7 +175,8 @@ export class CiderClient {
 		return this.request("POST", "/playback/next");
 	}
 	previous(force = false): Promise<void> {
-		return this.request("POST", "/playback/previous", force ? { force: true } : undefined);
+		// Cider 4.0.25 rejects a bodiless POST here with 400 "Invalid request body".
+		return this.request("POST", "/playback/previous", force ? { force: true } : {});
 	}
 	seek(positionSec: number): Promise<void> {
 		return this.request("POST", "/playback/seek", { position: positionSec });
