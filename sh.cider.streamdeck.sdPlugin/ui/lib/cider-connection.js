@@ -78,7 +78,9 @@
 	});
 
 	window.ciderOpenConnection = function () {
-		connWin = window.open("connection-window.html", "ciderSettings", "width=400,height=520");
+		// No window name: OpenDeck sends named targets to the system browser, where
+		// the window can reach neither opener nor BroadcastChannel (#42).
+		connWin = window.open("connection-window.html", undefined, "width=400,height=520");
 	};
 
 	document.addEventListener("DOMContentLoaded", function () {
