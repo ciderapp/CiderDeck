@@ -49,7 +49,7 @@
 	});
 
 	window.ciderBrowseLibrary = function () {
-		browserWin = window.open("library-browser.html", "ciderLibrary", "width=920,height=660");
+		browserWin = window.open("library-browser.html", undefined, "width=920,height=660"); // unnamed, see cider-connection.js
 	};
 
 	document.addEventListener("DOMContentLoaded", function () {
